@@ -1,0 +1,522 @@
+[
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "089cb86dd22bff589a4eafb7ab8e42dc357623b4",
+    "message": "Merge commit from fork",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/ctx.py",
+      "src/flask/sessions.py",
+      "src/flask/templating.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/ctx.py",
+        "src/flask/sessions.py",
+        "src/flask/templating.py"
+      ],
+      "required_context_files": [
+        "src/flask/testing.py",
+        "src/flask/globals.py",
+        "src/flask/helpers.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.2568,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "session",
+            "_cv_app",
+            "_cv_request",
+            "request_ctx"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/helpers.py",
+          "symbols_used": [
+            "stream_with_context"
+          ],
+          "centrality": 0.0117,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex cc0cf0af..71d29e7e 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -3,6 +3,9 @@ Version 3.1.3\n \n Unreleased\n \n+-   The session is marked as accessed for operations that only access the keys\n+    but not the values, such as ``in`` and ``len``. :ghsa:`68rp-wp8r-4726`\n+\n \n Version 3.1.2\n -------------\ndiff --git a/src/flask/app.py b/src/flask/app.py\nindex c6dd7833..cc326dbe 100644\n--- a/src/flask/app.py\n+++ b/src/flask/app.py\n@@ -1318,8 +1318,8 @@ class Flask(App):\n                 for func in reversed(self.after_request_funcs[name]):\n                     response = self.ensure_sync(func)(response)\n \n-        if not self.session_interface.is_null_session(ctx.session):\n-            self.session_interface.save_session(self, ctx.session, response)\n+        if not self.session_interface.is_null_session(ctx._session):\n+            self.session_interface.save_session(self, ctx._session, response)\n \n         return response\n \ndiff --git a/src/flask/ctx.py b/src/flask/ctx.py\nindex 222e818e..5f7b1f1d 100644\n--- a/src/flask/ctx.py\n+++ b/src/flask/ctx.py\n@@ -324,7 +324,7 @@ class RequestContext:\n         except HTTPException as e:\n             self.requ"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "c17f379390731543eea33a570a47bd4ef76a54fa",
+    "message": "request context tracks session access",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/ctx.py",
+      "src/flask/sessions.py",
+      "src/flask/templating.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/ctx.py",
+        "src/flask/sessions.py",
+        "src/flask/templating.py"
+      ],
+      "required_context_files": [
+        "src/flask/testing.py",
+        "src/flask/globals.py",
+        "src/flask/helpers.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.2568,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "session",
+            "_cv_app",
+            "_cv_request",
+            "request_ctx"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/helpers.py",
+          "symbols_used": [
+            "stream_with_context"
+          ],
+          "centrality": 0.0117,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex cc0cf0af..71d29e7e 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -3,6 +3,9 @@ Version 3.1.3\n \n Unreleased\n \n+-   The session is marked as accessed for operations that only access the keys\n+    but not the values, such as ``in`` and ``len``. :ghsa:`68rp-wp8r-4726`\n+\n \n Version 3.1.2\n -------------\ndiff --git a/src/flask/app.py b/src/flask/app.py\nindex c6dd7833..cc326dbe 100644\n--- a/src/flask/app.py\n+++ b/src/flask/app.py\n@@ -1318,8 +1318,8 @@ class Flask(App):\n                 for func in reversed(self.after_request_funcs[name]):\n                     response = self.ensure_sync(func)(response)\n \n-        if not self.session_interface.is_null_session(ctx.session):\n-            self.session_interface.save_session(self, ctx.session, response)\n+        if not self.session_interface.is_null_session(ctx._session):\n+            self.session_interface.save_session(self, ctx._session, response)\n \n         return response\n \ndiff --git a/src/flask/ctx.py b/src/flask/ctx.py\nindex 222e818e..5f7b1f1d 100644\n--- a/src/flask/ctx.py\n+++ b/src/flask/ctx.py\n@@ -324,7 +324,7 @@ class RequestContext:\n         except HTTPException as e:\n             self.requ"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "a20bcff8dc4e263312cfd74c11e432bfe8c194c1",
+    "message": "enable secret key rotation (#5632)",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/sessions.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/sessions.py"
+      ],
+      "required_context_files": [
+        "src/flask/globals.py",
+        "src/flask/wrappers.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.2305,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "session"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/wrappers.py",
+          "symbols_used": [
+            "Request"
+          ],
+          "centrality": 0.02008,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex 8c19cafa..5a65bf36 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -20,6 +20,9 @@ Unreleased\n -   ``-e path`` takes precedence over default ``.env`` and ``.flaskenv`` files.\n     ``load_dotenv`` loads default files in addition to a path unless\n     ``load_defaults=False`` is passed. :issue:`5628`\n+-   Support key rotation with the ``SECRET_KEY_FALLBACKS`` config, a list of old\n+    secret keys that can still be used for unsigning. Extensions will need to\n+    add support. :issue:`5621`\n \n \n Version 3.0.3\ndiff --git a/docs/config.rst b/docs/config.rst\nindex c17fc932..51b795f7 100644\n--- a/docs/config.rst\n+++ b/docs/config.rst\n@@ -125,6 +125,22 @@ The following configuration values are used internally by Flask:\n \n     Default: ``None``\n \n+.. py:data:: SECRET_KEY_FALLBACKS\n+\n+    A list of old secret keys that can still be used for unsigning, most recent\n+    first. This allows a project to implement key rotation without invalidating\n+    active sessions or other recently-signed secrets.\n+\n+    Keys should be removed after an appropriate period of time, as checking each\n+    additional key adds some overhead.\n+\n+    Flask's built-in secure co"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "e13373f838ab34027c5a80e16a6cb8262d41eab7",
+    "message": "enable secret key rotation",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/sessions.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/sessions.py"
+      ],
+      "required_context_files": [
+        "src/flask/globals.py",
+        "src/flask/wrappers.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.2305,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "session"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/wrappers.py",
+          "symbols_used": [
+            "Request"
+          ],
+          "centrality": 0.02008,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex 8c19cafa..5a65bf36 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -20,6 +20,9 @@ Unreleased\n -   ``-e path`` takes precedence over default ``.env`` and ``.flaskenv`` files.\n     ``load_dotenv`` loads default files in addition to a path unless\n     ``load_defaults=False`` is passed. :issue:`5628`\n+-   Support key rotation with the ``SECRET_KEY_FALLBACKS`` config, a list of old\n+    secret keys that can still be used for unsigning. Extensions will need to\n+    add support. :issue:`5621`\n \n \n Version 3.0.3\ndiff --git a/docs/config.rst b/docs/config.rst\nindex c17fc932..51b795f7 100644\n--- a/docs/config.rst\n+++ b/docs/config.rst\n@@ -125,6 +125,22 @@ The following configuration values are used internally by Flask:\n \n     Default: ``None``\n \n+.. py:data:: SECRET_KEY_FALLBACKS\n+\n+    A list of old secret keys that can still be used for unsigning, most recent\n+    first. This allows a project to implement key rotation without invalidating\n+    active sessions or other recently-signed secrets.\n+\n+    Keys should be removed after an appropriate period of time, as checking each\n+    additional key adds some overhead.\n+\n+    Flask's built-in secure co"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "6f2014d353d514e404c1f40e8f0a24e2bf62b941",
+    "message": "add config and docs for limits (#5626)",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/wrappers.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/wrappers.py"
+      ],
+      "required_context_files": [
+        "src/flask/testing.py",
+        "src/flask/globals.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.1951,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "current_app"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex f3e624f1..1cfbc5fe 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -11,6 +11,10 @@ Unreleased\n -   ``Flask.open_resource``/``open_instance_resource`` and\n     ``Blueprint.open_resource`` take an ``encoding`` parameter to use when\n     opening in text mode. It defaults to ``utf-8``. :issue:`5504`\n+-   ``Request.max_content_length`` can be customized per-request instead of only\n+    through the ``MAX_CONTENT_LENGTH`` config. Added\n+    ``MAX_FORM_MEMORY_SIZE`` and ``MAX_FORM_PARTS`` config. Added documentation\n+    about resource limits to the security page. :issue:`5625`\n \n \n Version 3.0.3\ndiff --git a/docs/config.rst b/docs/config.rst\nindex f9e71774..4f7d9026 100644\n--- a/docs/config.rst\n+++ b/docs/config.rst\n@@ -259,12 +259,54 @@ The following configuration values are used internally by Flask:\n \n .. py:data:: MAX_CONTENT_LENGTH\n \n-    Don't read more than this many bytes from the incoming request data. If not\n-    set and the request does not specify a ``CONTENT_LENGTH``, no data will be\n-    read for security.\n+    The maximum number of bytes that will be read during this request. If\n+    this limit is exceeded, a 413 :exc:`~werkzeug.exc"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "c7a53888a1a514619b0611fd8b7928592f4ed612",
+    "message": "add config and docs for limits",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/wrappers.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/wrappers.py"
+      ],
+      "required_context_files": [
+        "src/flask/testing.py",
+        "src/flask/globals.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.1951,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "current_app"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex f3e624f1..1cfbc5fe 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -11,6 +11,10 @@ Unreleased\n -   ``Flask.open_resource``/``open_instance_resource`` and\n     ``Blueprint.open_resource`` take an ``encoding`` parameter to use when\n     opening in text mode. It defaults to ``utf-8``. :issue:`5504`\n+-   ``Request.max_content_length`` can be customized per-request instead of only\n+    through the ``MAX_CONTENT_LENGTH`` config. Added\n+    ``MAX_FORM_MEMORY_SIZE`` and ``MAX_FORM_PARTS`` config. Added documentation\n+    about resource limits to the security page. :issue:`5625`\n \n \n Version 3.0.3\ndiff --git a/docs/config.rst b/docs/config.rst\nindex f9e71774..4f7d9026 100644\n--- a/docs/config.rst\n+++ b/docs/config.rst\n@@ -259,12 +259,54 @@ The following configuration values are used internally by Flask:\n \n .. py:data:: MAX_CONTENT_LENGTH\n \n-    Don't read more than this many bytes from the incoming request data. If not\n-    set and the request does not specify a ``CONTENT_LENGTH``, no data will be\n-    read for security.\n+    The maximum number of bytes that will be read during this request. If\n+    this limit is exceeded, a 413 :exc:`~werkzeug.exc"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "e8b91cd38aadafdf733558bbcea4810fa65bb849",
+    "message": "fix pyright type errors (#5620)",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/blueprints.py",
+      "src/flask/cli.py",
+      "src/flask/helpers.py",
+      "src/flask/sansio/app.py",
+      "src/flask/testing.py",
+      "src/flask/views.py",
+      "src/flask/wrappers.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/blueprints.py",
+        "src/flask/cli.py",
+        "src/flask/helpers.py",
+        "src/flask/sansio/app.py",
+        "src/flask/testing.py",
+        "src/flask/views.py",
+        "src/flask/wrappers.py"
+      ],
+      "required_context_files": [
+        "src/flask/globals.py",
+        "src/flask/typing.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.3084,
+      "constraint_bearing_files": [
+        "src/flask/globals.py",
+        "src/flask/typing.py"
+      ],
+      "constraint_types_found": [
+        "type_alias",
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "current_app"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/typing.py",
+          "symbols_used": [
+            "ResponseReturnValue",
+            "ShellContextProcessorCallable",
+            "HeadersValue"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "type_alias"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/pyproject.toml b/pyproject.toml\nindex cddf28cd..ff41f536 100644\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -95,7 +95,7 @@ ignore_missing_imports = true\n \n [tool.pyright]\n pythonVersion = \"3.8\"\n-include = [\"src/flask\", \"tests\"]\n+include = [\"src/flask\", \"tests/typing\"]\n typeCheckingMode = \"basic\"\n \n [tool.ruff]\ndiff --git a/src/flask/app.py b/src/flask/app.py\nindex 53eb602c..f726da69 100644\n--- a/src/flask/app.py\n+++ b/src/flask/app.py\n@@ -59,6 +59,7 @@ if t.TYPE_CHECKING:  # pragma: no cover\n \n     from .testing import FlaskClient\n     from .testing import FlaskCliRunner\n+    from .typing import HeadersValue\n \n T_shell_context_processor = t.TypeVar(\n     \"T_shell_context_processor\", bound=ft.ShellContextProcessorCallable\n@@ -349,7 +350,7 @@ class Flask(App):\n         path = os.path.join(self.root_path, resource)\n \n         if mode == \"rb\":\n-            return open(path, mode)\n+            return open(path, mode)  # pyright: ignore\n \n         return open(path, mode, encoding=encoding)\n \n@@ -1163,7 +1164,8 @@ class Flask(App):\n            response object.\n         \"\"\"\n \n-        status = headers = None\n+        status: int | None = None\n+        headers: HeadersValue | "
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "9e831e915fa875423af0c0de8f53a3780055919e",
+    "message": "fix pyright type errors",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/blueprints.py",
+      "src/flask/cli.py",
+      "src/flask/helpers.py",
+      "src/flask/sansio/app.py",
+      "src/flask/testing.py",
+      "src/flask/views.py",
+      "src/flask/wrappers.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/blueprints.py",
+        "src/flask/cli.py",
+        "src/flask/helpers.py",
+        "src/flask/sansio/app.py",
+        "src/flask/testing.py",
+        "src/flask/views.py",
+        "src/flask/wrappers.py"
+      ],
+      "required_context_files": [
+        "src/flask/globals.py",
+        "src/flask/typing.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.3084,
+      "constraint_bearing_files": [
+        "src/flask/globals.py",
+        "src/flask/typing.py"
+      ],
+      "constraint_types_found": [
+        "type_alias",
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "current_app"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/typing.py",
+          "symbols_used": [
+            "ResponseReturnValue",
+            "ShellContextProcessorCallable",
+            "HeadersValue"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "type_alias"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/pyproject.toml b/pyproject.toml\nindex cddf28cd..ff41f536 100644\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -95,7 +95,7 @@ ignore_missing_imports = true\n \n [tool.pyright]\n pythonVersion = \"3.8\"\n-include = [\"src/flask\", \"tests\"]\n+include = [\"src/flask\", \"tests/typing\"]\n typeCheckingMode = \"basic\"\n \n [tool.ruff]\ndiff --git a/src/flask/app.py b/src/flask/app.py\nindex 53eb602c..f726da69 100644\n--- a/src/flask/app.py\n+++ b/src/flask/app.py\n@@ -59,6 +59,7 @@ if t.TYPE_CHECKING:  # pragma: no cover\n \n     from .testing import FlaskClient\n     from .testing import FlaskCliRunner\n+    from .typing import HeadersValue\n \n T_shell_context_processor = t.TypeVar(\n     \"T_shell_context_processor\", bound=ft.ShellContextProcessorCallable\n@@ -349,7 +350,7 @@ class Flask(App):\n         path = os.path.join(self.root_path, resource)\n \n         if mode == \"rb\":\n-            return open(path, mode)\n+            return open(path, mode)  # pyright: ignore\n \n         return open(path, mode, encoding=encoding)\n \n@@ -1163,7 +1164,8 @@ class Flask(App):\n            response object.\n         \"\"\"\n \n-        status = headers = None\n+        status: int | None = None\n+        headers: HeadersValue | "
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "4f42c642036e6fdd915dd492b263c3b887cdb2d9",
+    "message": "Merge branch '3.0.x'",
+    "changed_files": [
+      "src/flask/sessions.py",
+      "src/flask/wrappers.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/sessions.py",
+        "src/flask/wrappers.py"
+      ],
+      "required_context_files": [
+        "src/flask/globals.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.332,
+      "constraint_bearing_files": [],
+      "constraint_types_found": [],
+      "required_context_details": [
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "session"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/src/flask/sessions.py b/src/flask/sessions.py\nindex d1b82c98..05b367a2 100644\n--- a/src/flask/sessions.py\n+++ b/src/flask/sessions.py\n@@ -365,7 +365,7 @@ class SecureCookieSessionInterface(SessionInterface):\n             return\n \n         expires = self.get_expiration_time(app, session)\n-        val = self.get_signing_serializer(app).dumps(dict(session))  # type: ignore\n+        val = self.get_signing_serializer(app).dumps(dict(session))  # type: ignore[union-attr]\n         response.set_cookie(\n             name,\n             val,\ndiff --git a/src/flask/wrappers.py b/src/flask/wrappers.py\nindex c1eca807..db3118e6 100644\n--- a/src/flask/wrappers.py\n+++ b/src/flask/wrappers.py\n@@ -71,7 +71,7 @@ class Request(RequestBase):\n         reconstruct the same URL or a modified URL.\n         \"\"\"\n         if self.url_rule is not None:\n-            return self.url_rule.endpoint\n+            return self.url_rule.endpoint  # type: ignore[no-any-return]\n \n         return None\n \n"
+  }
+]

@@ -1,0 +1,49 @@
+{
+  "task_id": "flask-001",
+  "repo_id": "flask",
+  "repo_url": "https://github.com/pallets/flask",
+  "commit_sha": "c17f379390731543eea33a570a47bd4ef76a54fa",
+  "language": "python",
+  "task_category": "bug_investigation",
+  "difficulty_level": "medium",
+  "difficulty_score": 0.58,
+  "context_distance_hops": 2,
+  "irreducibility_score": 0.74,
+  "required_context_files": [
+    "src/flask/globals.py"
+  ],
+  "changed_files": [
+    "src/flask/app.py",
+    "src/flask/ctx.py",
+    "src/flask/sessions.py",
+    "src/flask/templating.py"
+  ],
+  "constraint_types": ["proxy_architecture", "security_invariant"],
+  "prompt": "Users report that HTTP responses are sometimes missing the 'Vary: Cookie' header even when the request handler checks session keys using 'in' or 'len'. This means caching proxies may serve the wrong cached response to different users. The session's 'accessed' flag controls whether this header is added. Investigate why key-checking operations on the session do not trigger the flag, and fix the issue so that any access to session data — including key existence checks — correctly marks the session as accessed.",
+  "human_annotation_notes": "globals.py is the architectural key: it shows that 'flask.session' is a LocalProxy routing through RequestContext.session. The correct fix centralizes 'accessed = True' at the property accessor in RequestContext rather than in individual SecureCookieSession methods — because this catches ALL access including iteration, 'in', and 'len' which bypass __getitem__. An agent that never reads globals.py will likely add per-method tracking to SecureCookieSession (the naive fix) rather than the property-level fix, and will miss why templating.py must stop replacing the session proxy with a concrete object.",
+  "assert_design": {
+    "retrieval_check": ["src/flask/globals.py"],
+    "constraint_symbols": ["LocalProxy", "accessed", "_session", "RequestContext"],
+    "cpc_description": "The fix must: (1) move accessed tracking to a RequestContext property, (2) use _session internally to avoid recursion, (3) leave templating.py's session injection removed or commented out"
+  },
+  "constraint_propagation_targets": [
+    {
+      "path": "property_accessor",
+      "pattern": "@property",
+      "description": "session must become a property in RequestContext"
+    },
+    {
+      "path": "internal_reference",
+      "pattern": "_session",
+      "description": "internal references must use _session to avoid infinite recursion through the property"
+    },
+    {
+      "path": "accessed_flag",
+      "pattern": "\\.accessed\\s*=\\s*True",
+      "description": "accessed must be set in the property, not in session methods"
+    }
+  ],
+  "extraction_method": "semi-automated",
+  "architecture_pattern": "proxy_pattern",
+  "timeout": 90000
+}

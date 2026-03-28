@@ -1,0 +1,1919 @@
+[
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "089cb86dd22bff589a4eafb7ab8e42dc357623b4",
+    "message": "Merge commit from fork",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/ctx.py",
+      "src/flask/sessions.py",
+      "src/flask/templating.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/ctx.py",
+        "src/flask/sessions.py",
+        "src/flask/templating.py"
+      ],
+      "required_context_files": [
+        "src/flask/testing.py",
+        "src/flask/globals.py",
+        "src/flask/helpers.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.2568,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "session",
+            "_cv_app",
+            "_cv_request",
+            "request_ctx"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/helpers.py",
+          "symbols_used": [
+            "stream_with_context"
+          ],
+          "centrality": 0.0117,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex cc0cf0af..71d29e7e 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -3,6 +3,9 @@ Version 3.1.3\n \n Unreleased\n \n+-   The session is marked as accessed for operations that only access the keys\n+    but not the values, such as ``in`` and ``len``. :ghsa:`68rp-wp8r-4726`\n+\n \n Version 3.1.2\n -------------\ndiff --git a/src/flask/app.py b/src/flask/app.py\nindex c6dd7833..cc326dbe 100644\n--- a/src/flask/app.py\n+++ b/src/flask/app.py\n@@ -1318,8 +1318,8 @@ class Flask(App):\n                 for func in reversed(self.after_request_funcs[name]):\n                     response = self.ensure_sync(func)(response)\n \n-        if not self.session_interface.is_null_session(ctx.session):\n-            self.session_interface.save_session(self, ctx.session, response)\n+        if not self.session_interface.is_null_session(ctx._session):\n+            self.session_interface.save_session(self, ctx._session, response)\n \n         return response\n \ndiff --git a/src/flask/ctx.py b/src/flask/ctx.py\nindex 222e818e..5f7b1f1d 100644\n--- a/src/flask/ctx.py\n+++ b/src/flask/ctx.py\n@@ -324,7 +324,7 @@ class RequestContext:\n         except HTTPException as e:\n             self.requ"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "c17f379390731543eea33a570a47bd4ef76a54fa",
+    "message": "request context tracks session access",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/ctx.py",
+      "src/flask/sessions.py",
+      "src/flask/templating.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/ctx.py",
+        "src/flask/sessions.py",
+        "src/flask/templating.py"
+      ],
+      "required_context_files": [
+        "src/flask/testing.py",
+        "src/flask/globals.py",
+        "src/flask/helpers.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.2568,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "session",
+            "_cv_app",
+            "_cv_request",
+            "request_ctx"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/helpers.py",
+          "symbols_used": [
+            "stream_with_context"
+          ],
+          "centrality": 0.0117,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex cc0cf0af..71d29e7e 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -3,6 +3,9 @@ Version 3.1.3\n \n Unreleased\n \n+-   The session is marked as accessed for operations that only access the keys\n+    but not the values, such as ``in`` and ``len``. :ghsa:`68rp-wp8r-4726`\n+\n \n Version 3.1.2\n -------------\ndiff --git a/src/flask/app.py b/src/flask/app.py\nindex c6dd7833..cc326dbe 100644\n--- a/src/flask/app.py\n+++ b/src/flask/app.py\n@@ -1318,8 +1318,8 @@ class Flask(App):\n                 for func in reversed(self.after_request_funcs[name]):\n                     response = self.ensure_sync(func)(response)\n \n-        if not self.session_interface.is_null_session(ctx.session):\n-            self.session_interface.save_session(self, ctx.session, response)\n+        if not self.session_interface.is_null_session(ctx._session):\n+            self.session_interface.save_session(self, ctx._session, response)\n \n         return response\n \ndiff --git a/src/flask/ctx.py b/src/flask/ctx.py\nindex 222e818e..5f7b1f1d 100644\n--- a/src/flask/ctx.py\n+++ b/src/flask/ctx.py\n@@ -324,7 +324,7 @@ class RequestContext:\n         except HTTPException as e:\n             self.requ"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "a20bcff8dc4e263312cfd74c11e432bfe8c194c1",
+    "message": "enable secret key rotation (#5632)",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/sessions.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/sessions.py"
+      ],
+      "required_context_files": [
+        "src/flask/globals.py",
+        "src/flask/wrappers.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.2305,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "session"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/wrappers.py",
+          "symbols_used": [
+            "Request"
+          ],
+          "centrality": 0.02008,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex 8c19cafa..5a65bf36 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -20,6 +20,9 @@ Unreleased\n -   ``-e path`` takes precedence over default ``.env`` and ``.flaskenv`` files.\n     ``load_dotenv`` loads default files in addition to a path unless\n     ``load_defaults=False`` is passed. :issue:`5628`\n+-   Support key rotation with the ``SECRET_KEY_FALLBACKS`` config, a list of old\n+    secret keys that can still be used for unsigning. Extensions will need to\n+    add support. :issue:`5621`\n \n \n Version 3.0.3\ndiff --git a/docs/config.rst b/docs/config.rst\nindex c17fc932..51b795f7 100644\n--- a/docs/config.rst\n+++ b/docs/config.rst\n@@ -125,6 +125,22 @@ The following configuration values are used internally by Flask:\n \n     Default: ``None``\n \n+.. py:data:: SECRET_KEY_FALLBACKS\n+\n+    A list of old secret keys that can still be used for unsigning, most recent\n+    first. This allows a project to implement key rotation without invalidating\n+    active sessions or other recently-signed secrets.\n+\n+    Keys should be removed after an appropriate period of time, as checking each\n+    additional key adds some overhead.\n+\n+    Flask's built-in secure co"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "e13373f838ab34027c5a80e16a6cb8262d41eab7",
+    "message": "enable secret key rotation",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/sessions.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/sessions.py"
+      ],
+      "required_context_files": [
+        "src/flask/globals.py",
+        "src/flask/wrappers.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.2305,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "session"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/wrappers.py",
+          "symbols_used": [
+            "Request"
+          ],
+          "centrality": 0.02008,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex 8c19cafa..5a65bf36 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -20,6 +20,9 @@ Unreleased\n -   ``-e path`` takes precedence over default ``.env`` and ``.flaskenv`` files.\n     ``load_dotenv`` loads default files in addition to a path unless\n     ``load_defaults=False`` is passed. :issue:`5628`\n+-   Support key rotation with the ``SECRET_KEY_FALLBACKS`` config, a list of old\n+    secret keys that can still be used for unsigning. Extensions will need to\n+    add support. :issue:`5621`\n \n \n Version 3.0.3\ndiff --git a/docs/config.rst b/docs/config.rst\nindex c17fc932..51b795f7 100644\n--- a/docs/config.rst\n+++ b/docs/config.rst\n@@ -125,6 +125,22 @@ The following configuration values are used internally by Flask:\n \n     Default: ``None``\n \n+.. py:data:: SECRET_KEY_FALLBACKS\n+\n+    A list of old secret keys that can still be used for unsigning, most recent\n+    first. This allows a project to implement key rotation without invalidating\n+    active sessions or other recently-signed secrets.\n+\n+    Keys should be removed after an appropriate period of time, as checking each\n+    additional key adds some overhead.\n+\n+    Flask's built-in secure co"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "6f2014d353d514e404c1f40e8f0a24e2bf62b941",
+    "message": "add config and docs for limits (#5626)",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/wrappers.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/wrappers.py"
+      ],
+      "required_context_files": [
+        "src/flask/testing.py",
+        "src/flask/globals.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.1951,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "current_app"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex f3e624f1..1cfbc5fe 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -11,6 +11,10 @@ Unreleased\n -   ``Flask.open_resource``/``open_instance_resource`` and\n     ``Blueprint.open_resource`` take an ``encoding`` parameter to use when\n     opening in text mode. It defaults to ``utf-8``. :issue:`5504`\n+-   ``Request.max_content_length`` can be customized per-request instead of only\n+    through the ``MAX_CONTENT_LENGTH`` config. Added\n+    ``MAX_FORM_MEMORY_SIZE`` and ``MAX_FORM_PARTS`` config. Added documentation\n+    about resource limits to the security page. :issue:`5625`\n \n \n Version 3.0.3\ndiff --git a/docs/config.rst b/docs/config.rst\nindex f9e71774..4f7d9026 100644\n--- a/docs/config.rst\n+++ b/docs/config.rst\n@@ -259,12 +259,54 @@ The following configuration values are used internally by Flask:\n \n .. py:data:: MAX_CONTENT_LENGTH\n \n-    Don't read more than this many bytes from the incoming request data. If not\n-    set and the request does not specify a ``CONTENT_LENGTH``, no data will be\n-    read for security.\n+    The maximum number of bytes that will be read during this request. If\n+    this limit is exceeded, a 413 :exc:`~werkzeug.exc"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "c7a53888a1a514619b0611fd8b7928592f4ed612",
+    "message": "add config and docs for limits",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/wrappers.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/wrappers.py"
+      ],
+      "required_context_files": [
+        "src/flask/testing.py",
+        "src/flask/globals.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.1951,
+      "constraint_bearing_files": [
+        "src/flask/globals.py"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "current_app"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex f3e624f1..1cfbc5fe 100644\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -11,6 +11,10 @@ Unreleased\n -   ``Flask.open_resource``/``open_instance_resource`` and\n     ``Blueprint.open_resource`` take an ``encoding`` parameter to use when\n     opening in text mode. It defaults to ``utf-8``. :issue:`5504`\n+-   ``Request.max_content_length`` can be customized per-request instead of only\n+    through the ``MAX_CONTENT_LENGTH`` config. Added\n+    ``MAX_FORM_MEMORY_SIZE`` and ``MAX_FORM_PARTS`` config. Added documentation\n+    about resource limits to the security page. :issue:`5625`\n \n \n Version 3.0.3\ndiff --git a/docs/config.rst b/docs/config.rst\nindex f9e71774..4f7d9026 100644\n--- a/docs/config.rst\n+++ b/docs/config.rst\n@@ -259,12 +259,54 @@ The following configuration values are used internally by Flask:\n \n .. py:data:: MAX_CONTENT_LENGTH\n \n-    Don't read more than this many bytes from the incoming request data. If not\n-    set and the request does not specify a ``CONTENT_LENGTH``, no data will be\n-    read for security.\n+    The maximum number of bytes that will be read during this request. If\n+    this limit is exceeded, a 413 :exc:`~werkzeug.exc"
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "e8b91cd38aadafdf733558bbcea4810fa65bb849",
+    "message": "fix pyright type errors (#5620)",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/blueprints.py",
+      "src/flask/cli.py",
+      "src/flask/helpers.py",
+      "src/flask/sansio/app.py",
+      "src/flask/testing.py",
+      "src/flask/views.py",
+      "src/flask/wrappers.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/blueprints.py",
+        "src/flask/cli.py",
+        "src/flask/helpers.py",
+        "src/flask/sansio/app.py",
+        "src/flask/testing.py",
+        "src/flask/views.py",
+        "src/flask/wrappers.py"
+      ],
+      "required_context_files": [
+        "src/flask/globals.py",
+        "src/flask/typing.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.3084,
+      "constraint_bearing_files": [
+        "src/flask/globals.py",
+        "src/flask/typing.py"
+      ],
+      "constraint_types_found": [
+        "type_alias",
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "current_app"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/typing.py",
+          "symbols_used": [
+            "ResponseReturnValue",
+            "ShellContextProcessorCallable",
+            "HeadersValue"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "type_alias"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/pyproject.toml b/pyproject.toml\nindex cddf28cd..ff41f536 100644\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -95,7 +95,7 @@ ignore_missing_imports = true\n \n [tool.pyright]\n pythonVersion = \"3.8\"\n-include = [\"src/flask\", \"tests\"]\n+include = [\"src/flask\", \"tests/typing\"]\n typeCheckingMode = \"basic\"\n \n [tool.ruff]\ndiff --git a/src/flask/app.py b/src/flask/app.py\nindex 53eb602c..f726da69 100644\n--- a/src/flask/app.py\n+++ b/src/flask/app.py\n@@ -59,6 +59,7 @@ if t.TYPE_CHECKING:  # pragma: no cover\n \n     from .testing import FlaskClient\n     from .testing import FlaskCliRunner\n+    from .typing import HeadersValue\n \n T_shell_context_processor = t.TypeVar(\n     \"T_shell_context_processor\", bound=ft.ShellContextProcessorCallable\n@@ -349,7 +350,7 @@ class Flask(App):\n         path = os.path.join(self.root_path, resource)\n \n         if mode == \"rb\":\n-            return open(path, mode)\n+            return open(path, mode)  # pyright: ignore\n \n         return open(path, mode, encoding=encoding)\n \n@@ -1163,7 +1164,8 @@ class Flask(App):\n            response object.\n         \"\"\"\n \n-        status = headers = None\n+        status: int | None = None\n+        headers: HeadersValue | "
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "9e831e915fa875423af0c0de8f53a3780055919e",
+    "message": "fix pyright type errors",
+    "changed_files": [
+      "src/flask/app.py",
+      "src/flask/blueprints.py",
+      "src/flask/cli.py",
+      "src/flask/helpers.py",
+      "src/flask/sansio/app.py",
+      "src/flask/testing.py",
+      "src/flask/views.py",
+      "src/flask/wrappers.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/app.py",
+        "src/flask/blueprints.py",
+        "src/flask/cli.py",
+        "src/flask/helpers.py",
+        "src/flask/sansio/app.py",
+        "src/flask/testing.py",
+        "src/flask/views.py",
+        "src/flask/wrappers.py"
+      ],
+      "required_context_files": [
+        "src/flask/globals.py",
+        "src/flask/typing.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.3084,
+      "constraint_bearing_files": [
+        "src/flask/globals.py",
+        "src/flask/typing.py"
+      ],
+      "constraint_types_found": [
+        "type_alias",
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "current_app"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/typing.py",
+          "symbols_used": [
+            "ResponseReturnValue",
+            "ShellContextProcessorCallable",
+            "HeadersValue"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "type_alias"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/pyproject.toml b/pyproject.toml\nindex cddf28cd..ff41f536 100644\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -95,7 +95,7 @@ ignore_missing_imports = true\n \n [tool.pyright]\n pythonVersion = \"3.8\"\n-include = [\"src/flask\", \"tests\"]\n+include = [\"src/flask\", \"tests/typing\"]\n typeCheckingMode = \"basic\"\n \n [tool.ruff]\ndiff --git a/src/flask/app.py b/src/flask/app.py\nindex 53eb602c..f726da69 100644\n--- a/src/flask/app.py\n+++ b/src/flask/app.py\n@@ -59,6 +59,7 @@ if t.TYPE_CHECKING:  # pragma: no cover\n \n     from .testing import FlaskClient\n     from .testing import FlaskCliRunner\n+    from .typing import HeadersValue\n \n T_shell_context_processor = t.TypeVar(\n     \"T_shell_context_processor\", bound=ft.ShellContextProcessorCallable\n@@ -349,7 +350,7 @@ class Flask(App):\n         path = os.path.join(self.root_path, resource)\n \n         if mode == \"rb\":\n-            return open(path, mode)\n+            return open(path, mode)  # pyright: ignore\n \n         return open(path, mode, encoding=encoding)\n \n@@ -1163,7 +1164,8 @@ class Flask(App):\n            response object.\n         \"\"\"\n \n-        status = headers = None\n+        status: int | None = None\n+        headers: HeadersValue | "
+  },
+  {
+    "repo_id": "flask",
+    "language": "python",
+    "sha": "4f42c642036e6fdd915dd492b263c3b887cdb2d9",
+    "message": "Merge branch '3.0.x'",
+    "changed_files": [
+      "src/flask/sessions.py",
+      "src/flask/wrappers.py"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/flask/sessions.py",
+        "src/flask/wrappers.py"
+      ],
+      "required_context_files": [
+        "src/flask/globals.py"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.332,
+      "constraint_bearing_files": [],
+      "constraint_types_found": [],
+      "required_context_details": [
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "session"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/src/flask/sessions.py b/src/flask/sessions.py\nindex d1b82c98..05b367a2 100644\n--- a/src/flask/sessions.py\n+++ b/src/flask/sessions.py\n@@ -365,7 +365,7 @@ class SecureCookieSessionInterface(SessionInterface):\n             return\n \n         expires = self.get_expiration_time(app, session)\n-        val = self.get_signing_serializer(app).dumps(dict(session))  # type: ignore\n+        val = self.get_signing_serializer(app).dumps(dict(session))  # type: ignore[union-attr]\n         response.set_cookie(\n             name,\n             val,\ndiff --git a/src/flask/wrappers.py b/src/flask/wrappers.py\nindex c1eca807..db3118e6 100644\n--- a/src/flask/wrappers.py\n+++ b/src/flask/wrappers.py\n@@ -71,7 +71,7 @@ class Request(RequestBase):\n         reconstruct the same URL or a modified URL.\n         \"\"\"\n         if self.url_rule is not None:\n-            return self.url_rule.endpoint\n+            return self.url_rule.endpoint  # type: ignore[no-any-return]\n \n         return None\n \n"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "1e1f0b1e76b89b48542171e2c5ee829a69c2b91f",
+    "message": "chore: support min go version 1.18 (#3511)",
+    "changed_files": [
+      "any.go",
+      "binding/any.go",
+      "binding/binding.go",
+      "binding/binding_nomsgpack.go",
+      "binding/json.go",
+      "binding/msgpack.go",
+      "context.go",
+      "context_appengine.go",
+      "debug.go",
+      "deprecated.go",
+      "internal/json/go_json.go",
+      "internal/json/json.go",
+      "internal/json/jsoniter.go",
+      "internal/json/sonic.go",
+      "render/any.go",
+      "render/msgpack.go",
+      "utils.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "any.go",
+        "binding/any.go",
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go",
+        "binding/json.go",
+        "binding/msgpack.go",
+        "context.go",
+        "context_appengine.go",
+        "debug.go",
+        "deprecated.go",
+        "internal/json/go_json.go",
+        "internal/json/json.go",
+        "internal/json/jsoniter.go",
+        "internal/json/sonic.go",
+        "render/any.go",
+        "render/msgpack.go",
+        "utils.go"
+      ],
+      "required_context_files": [
+        "render/text.go",
+        "render/render.go",
+        "render/toml.go",
+        "render/data.go",
+        "render/json.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.6863,
+      "constraint_bearing_files": [
+        "render/text.go",
+        "render/render.go",
+        "render/toml.go",
+        "render/data.go",
+        "render/json.go"
+      ],
+      "constraint_types_found": [
+        "interface",
+        "struct"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/text.go",
+          "symbols_used": [
+            "String"
+          ],
+          "centrality": 0.00025,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/render.go",
+          "symbols_used": [
+            "Render"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "render/toml.go",
+          "symbols_used": [
+            "TOML"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/data.go",
+          "symbols_used": [
+            "Data"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/json.go",
+          "symbols_used": [
+            "JSON"
+          ],
+          "centrality": 0.00226,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/.github/workflows/gin.yml b/.github/workflows/gin.yml\nindex fac97d4..5c1504a 100644\n--- a/.github/workflows/gin.yml\n+++ b/.github/workflows/gin.yml\n@@ -18,7 +18,7 @@ jobs:\n       - name: Setup go\n         uses: actions/setup-go@v3\n         with:\n-          go-version: '^1.16'\n+          go-version: '^1.18'\n       - name: Checkout repository\n         uses: actions/checkout@v3\n       - name: Setup golangci-lint\n@@ -31,7 +31,7 @@ jobs:\n     strategy:\n       matrix:\n         os: [ubuntu-latest, macos-latest]\n-        go: ['1.16', '1.17', '1.18', '1.19', '1.20']\n+        go: ['1.18', '1.19', '1.20']\n         test-tags: ['', '-tags nomsgpack', '-tags \"sonic avx\"', '-tags go_json']\n         include:\n           - os: ubuntu-latest\n@@ -73,7 +73,7 @@ jobs:\n           flags: ${{ matrix.os }},go-${{ matrix.go }},${{ matrix.test-tags }}\n \n       - name: Format\n-        if: matrix.go-version == '1.19.x'\n+        if: matrix.go-version == '1.20.x'\n         run: diff -u <(echo -n) <(gofmt -d .)\n   notification-gitter:\n     needs: test\ndiff --git a/.github/workflows/goreleaser.yml b/.github/workflows/goreleaser.yml\nindex 3af3a45..baf02af 100644\n--- a/.github/workflows/goreleaser.yml\n+++"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "0c96a20209ca035964be126a745c167196fb6db3",
+    "message": "Stop useless panicking in context and render (#2150)",
+    "changed_files": [
+      "context.go",
+      "render/json.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "context.go",
+        "render/json.go"
+      ],
+      "required_context_files": [
+        "render/render.go",
+        "render/data.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.34,
+      "constraint_bearing_files": [
+        "render/render.go",
+        "render/data.go"
+      ],
+      "constraint_types_found": [
+        "interface",
+        "struct"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/render.go",
+          "symbols_used": [
+            "Render"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "render/data.go",
+          "symbols_used": [
+            "Data"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/context.go b/context.go\nindex 0474252..556f8ac 100644\n--- a/context.go\n+++ b/context.go\n@@ -924,7 +924,9 @@ func (c *Context) Render(code int, r render.Render) {\n \t}\n \n \tif err := r.Render(c.Writer); err != nil {\n-\t\tpanic(err)\n+\t\t// Pushing error to c.Errors\n+\t\t_ = c.Error(err)\n+\t\tc.Abort()\n \t}\n }\n \ndiff --git a/context_test.go b/context_test.go\nindex 827ee0f..1ab6b33 100644\n--- a/context_test.go\n+++ b/context_test.go\n@@ -32,6 +32,8 @@ import (\n \n var _ context.Context = (*Context)(nil)\n \n+var errTestRender = errors.New(\"TestRender\")\n+\n // Unit tests TODO\n // func (c *Context) File(filepath string) {\n // func (c *Context) Negotiate(code int, config Negotiate) {\n@@ -643,25 +645,21 @@ func TestContextBodyAllowedForStatus(t *testing.T) {\n \tassert.True(t, true, bodyAllowedForStatus(http.StatusInternalServerError))\n }\n \n-type TestPanicRender struct{}\n+type TestRender struct{}\n \n-func (*TestPanicRender) Render(http.ResponseWriter) error {\n-\treturn errors.New(\"TestPanicRender\")\n+func (*TestRender) Render(http.ResponseWriter) error {\n+\treturn errTestRender\n }\n \n-func (*TestPanicRender) WriteContentType(http.ResponseWriter) {}\n+func (*TestRender) WriteContentType(http.ResponseW"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "b04917c53e310e3746ec90cd93106cda8c956211",
+    "message": "chore: upgrade golangci-lint and fix golangci-lint error (#3278)",
+    "changed_files": [
+      "context.go",
+      "errors.go",
+      "ginS/gins.go",
+      "mode.go",
+      "path.go",
+      "recovery.go",
+      "routergroup.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "context.go",
+        "errors.go",
+        "ginS/gins.go",
+        "mode.go",
+        "path.go",
+        "recovery.go",
+        "routergroup.go"
+      ],
+      "required_context_files": [
+        "deprecated.go",
+        "render/text.go",
+        "fs.go",
+        "utils.go",
+        "tree.go",
+        "logger.go",
+        "binding/binding.go",
+        "response_writer.go",
+        "render/toml.go",
+        "render/xml.go",
+        "gin.go",
+        "binding/binding_nomsgpack.go",
+        "render/json.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.9013,
+      "constraint_bearing_files": [
+        "render/text.go",
+        "tree.go",
+        "logger.go",
+        "binding/binding.go",
+        "response_writer.go",
+        "render/toml.go",
+        "render/xml.go",
+        "gin.go",
+        "binding/binding_nomsgpack.go",
+        "render/json.go"
+      ],
+      "constraint_types_found": [
+        "interface",
+        "struct"
+      ],
+      "required_context_details": [
+        {
+          "file": "deprecated.go",
+          "symbols_used": [
+            "Context"
+          ],
+          "centrality": 0.00189,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "render/text.go",
+          "symbols_used": [
+            "String"
+          ],
+          "centrality": 0.00025,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "fs.go",
+          "symbols_used": [
+            "Dir"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "utils.go",
+          "symbols_used": [
+            "Bind"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "tree.go",
+          "symbols_used": [
+            "Params",
+            "Param"
+          ],
+          "centrality": 0.00025,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "logger.go",
+          "symbols_used": [
+            "Logger",
+            "ErrorLogger"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "binding/binding.go",
+          "symbols_used": [
+            "Binding"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "response_writer.go",
+          "symbols_used": [
+            "ResponseWriter"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "render/toml.go",
+          "symbols_used": [
+            "TOML"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/xml.go",
+          "symbols_used": [
+            "XML"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "gin.go",
+          "symbols_used": [
+            "New"
+          ],
+          "centrality": 0.00251,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "binding/binding_nomsgpack.go",
+          "symbols_used": [
+            "Binding"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "render/json.go",
+          "symbols_used": [
+            "JSON"
+          ],
+          "centrality": 0.00226,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/.github/workflows/gin.yml b/.github/workflows/gin.yml\nindex cb3a49a..cff8f4a 100644\n--- a/.github/workflows/gin.yml\n+++ b/.github/workflows/gin.yml\n@@ -21,7 +21,7 @@ jobs:\n       - name: Setup golangci-lint\n         uses: golangci/golangci-lint-action@v3.2.0\n         with:\n-          version: v1.45.0\n+          version: v1.48.0\n           args: --verbose\n   test:\n     needs: lint\ndiff --git a/context.go b/context.go\nindex 46bf113..f9489a7 100644\n--- a/context.go\n+++ b/context.go\n@@ -153,9 +153,10 @@ func (c *Context) Handler() HandlerFunc {\n \n // FullPath returns a matched route full path. For not found routes\n // returns an empty string.\n-//     router.GET(\"/user/:id\", func(c *gin.Context) {\n-//         c.FullPath() == \"/user/:id\" // true\n-//     })\n+//\n+//\trouter.GET(\"/user/:id\", func(c *gin.Context) {\n+//\t    c.FullPath() == \"/user/:id\" // true\n+//\t})\n func (c *Context) FullPath() string {\n \treturn c.fullPath\n }\n@@ -382,10 +383,11 @@ func (c *Context) GetStringMapStringSlice(key string) (smss map[string][]string)\n \n // Param returns the value of the URL param.\n // It is a shortcut for c.Params.ByName(key)\n-//     router.GET(\"/user/:id\", func(c *gin.Context) {\n-//   "
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "f197a8bae0c87e1b7cc2e32e399a40665a82f077",
+    "message": "feat(context): add ContextWithFallback feature flag (#3166) (#3172)",
+    "changed_files": [
+      "context.go",
+      "gin.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "context.go",
+        "gin.go"
+      ],
+      "required_context_files": [
+        "render/text.go",
+        "render/html.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.3503,
+      "constraint_bearing_files": [
+        "render/text.go",
+        "render/html.go"
+      ],
+      "constraint_types_found": [
+        "interface",
+        "struct"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/text.go",
+          "symbols_used": [
+            "String"
+          ],
+          "centrality": 0.00025,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/html.go",
+          "symbols_used": [
+            "Delims",
+            "HTMLRender"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/context.go b/context.go\nindex 6b25b3a..b1ad95e 100644\n--- a/context.go\n+++ b/context.go\n@@ -1158,7 +1158,7 @@ func (c *Context) SetAccepted(formats ...string) {\n \n // Deadline returns that there is no deadline (ok==false) when c.Request has no Context.\n func (c *Context) Deadline() (deadline time.Time, ok bool) {\n-\tif c.Request == nil || c.Request.Context() == nil {\n+\tif !c.engine.ContextWithFallback || c.Request == nil || c.Request.Context() == nil {\n \t\treturn\n \t}\n \treturn c.Request.Context().Deadline()\n@@ -1166,7 +1166,7 @@ func (c *Context) Deadline() (deadline time.Time, ok bool) {\n \n // Done returns nil (chan which will wait forever) when c.Request has no Context.\n func (c *Context) Done() <-chan struct{} {\n-\tif c.Request == nil || c.Request.Context() == nil {\n+\tif !c.engine.ContextWithFallback || c.Request == nil || c.Request.Context() == nil {\n \t\treturn nil\n \t}\n \treturn c.Request.Context().Done()\n@@ -1174,7 +1174,7 @@ func (c *Context) Done() <-chan struct{} {\n \n // Err returns nil when c.Request has no Context.\n func (c *Context) Err() error {\n-\tif c.Request == nil || c.Request.Context() == nil {\n+\tif !c.engine.ContextWithFallback || c.Request == nil || c.Reque"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "ed03102ef0b08c552bc3d0a73fbd98307461abcc",
+    "message": "[GIN-001] - Add TOML bining for gin (#3081)",
+    "changed_files": [
+      "binding/binding.go",
+      "binding/binding_nomsgpack.go",
+      "binding/toml.go",
+      "context.go",
+      "render/render.go",
+      "render/toml.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go",
+        "binding/toml.go",
+        "context.go",
+        "render/render.go",
+        "render/toml.go"
+      ],
+      "required_context_files": [
+        "render/yaml.go",
+        "render/msgpack.go",
+        "render/reader.go",
+        "render/xml.go",
+        "render/data.go",
+        "render/protobuf.go",
+        "render/json.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.7708,
+      "constraint_bearing_files": [
+        "render/yaml.go",
+        "render/msgpack.go",
+        "render/reader.go",
+        "render/xml.go",
+        "render/data.go",
+        "render/protobuf.go",
+        "render/json.go"
+      ],
+      "constraint_types_found": [
+        "struct"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/yaml.go",
+          "symbols_used": [
+            "YAML"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/msgpack.go",
+          "symbols_used": [
+            "MsgPack"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/reader.go",
+          "symbols_used": [
+            "Reader"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/xml.go",
+          "symbols_used": [
+            "XML"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/data.go",
+          "symbols_used": [
+            "Data"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/protobuf.go",
+          "symbols_used": [
+            "ProtoBuf"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/json.go",
+          "symbols_used": [
+            "AsciiJSON",
+            "JSON"
+          ],
+          "centrality": 0.00226,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/README.md b/README.md\nindex af9a1e5..6b4cabb 100644\n--- a/README.md\n+++ b/README.md\n@@ -658,7 +658,7 @@ func main() {\n \n ### Model binding and validation\n \n-To bind a request body into a type, use model binding. We currently support binding of JSON, XML, YAML and standard form values (foo=bar&boo=baz).\n+To bind a request body into a type, use model binding. We currently support binding of JSON, XML, YAML, TOML and standard form values (foo=bar&boo=baz).\n \n Gin uses [**go-playground/validator/v10**](https://github.com/go-playground/validator) for validation. Check the full docs on tags usage [here](https://godoc.org/github.com/go-playground/validator#hdr-Baked_In_Validators_and_Tags).\n \n@@ -666,10 +666,10 @@ Note that you need to set the corresponding binding tag on all fields you want t\n \n Also, Gin provides two sets of methods for binding:\n - **Type** - Must bind\n-  - **Methods** - `Bind`, `BindJSON`, `BindXML`, `BindQuery`, `BindYAML`, `BindHeader`\n+  - **Methods** - `Bind`, `BindJSON`, `BindXML`, `BindQuery`, `BindYAML`, `BindHeader`, `BindTOML`\n   - **Behavior** - These methods use `MustBindWith` under the hood. If there is a binding error, the request is aborted w"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "865fd560fc2f549cabb73452425dec22738c7b2d",
+    "message": "Update some comments, add function name prefix to comment (#3090)",
+    "changed_files": [
+      "gin.go",
+      "logger.go",
+      "response_writer.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "gin.go",
+        "logger.go",
+        "response_writer.go"
+      ],
+      "required_context_files": [
+        "render/text.go",
+        "render/html.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.3403,
+      "constraint_bearing_files": [
+        "render/text.go",
+        "render/html.go"
+      ],
+      "constraint_types_found": [
+        "interface",
+        "struct"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/text.go",
+          "symbols_used": [
+            "WriteString"
+          ],
+          "centrality": 0.00025,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/html.go",
+          "symbols_used": [
+            "Delims"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/gin.go b/gin.go\nindex b0e0154..c2e95f2 100644\n--- a/gin.go\n+++ b/gin.go\n@@ -67,10 +67,10 @@ type RoutesInfo []RouteInfo\n \n // Trusted platforms\n const (\n-\t// When running on Google App Engine. Trust X-Appengine-Remote-Addr\n+\t// PlatformGoogleAppEngine when running on Google App Engine. Trust X-Appengine-Remote-Addr\n \t// for determining the client's IP\n \tPlatformGoogleAppEngine = \"X-Appengine-Remote-Addr\"\n-\t// When using Cloudflare's CDN. Trust CF-Connecting-IP for determining\n+\t// PlatformCloudflare when using Cloudflare's CDN. Trust CF-Connecting-IP for determining\n \t// the client's IP\n \tPlatformCloudflare = \"CF-Connecting-IP\"\n )\n@@ -80,14 +80,14 @@ const (\n type Engine struct {\n \tRouterGroup\n \n-\t// Enables automatic redirection if the current route can't be matched but a\n+\t// RedirectTrailingSlash enables automatic redirection if the current route can't be matched but a\n \t// handler for the path with (without) the trailing slash exists.\n \t// For example if /foo/ is requested but a route only exists for /foo, the\n \t// client is redirected to /foo with http status code 301 for GET requests\n \t// and 307 for all other request methods.\n \tRedirectTrailingSlash bool\n \n-\t// "
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "2bde107686759098e2d64273bc79d1a0216a4500",
+    "message": "test support go1.18 (#2990)",
+    "changed_files": [
+      "any.go",
+      "binding/any.go",
+      "binding/binding.go",
+      "binding/binding_nomsgpack.go",
+      "binding/default_validator.go",
+      "binding/form.go",
+      "binding/form_mapping.go",
+      "binding/header.go",
+      "binding/json.go",
+      "binding/msgpack.go",
+      "binding/protobuf.go",
+      "binding/query.go",
+      "binding/uri.go",
+      "binding/xml.go",
+      "binding/yaml.go",
+      "context.go",
+      "debug.go",
+      "deprecated.go",
+      "errors.go",
+      "gin.go",
+      "logger.go",
+      "recovery.go",
+      "render/any.go",
+      "render/html.go",
+      "render/json.go",
+      "render/msgpack.go",
+      "render/protobuf.go",
+      "render/text.go",
+      "render/xml.go",
+      "render/yaml.go",
+      "utils.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "any.go",
+        "binding/any.go",
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go",
+        "binding/default_validator.go",
+        "binding/form.go",
+        "binding/form_mapping.go",
+        "binding/header.go",
+        "binding/json.go",
+        "binding/msgpack.go",
+        "binding/protobuf.go",
+        "binding/query.go",
+        "binding/uri.go",
+        "binding/xml.go",
+        "binding/yaml.go",
+        "context.go",
+        "debug.go",
+        "deprecated.go",
+        "errors.go",
+        "gin.go",
+        "logger.go",
+        "recovery.go",
+        "render/any.go",
+        "render/html.go",
+        "render/json.go",
+        "render/msgpack.go",
+        "render/protobuf.go",
+        "render/text.go",
+        "render/xml.go",
+        "render/yaml.go",
+        "utils.go"
+      ],
+      "required_context_files": [
+        "render/render.go",
+        "render/reader.go",
+        "render/data.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.455,
+      "constraint_bearing_files": [
+        "render/render.go",
+        "render/reader.go",
+        "render/data.go"
+      ],
+      "constraint_types_found": [
+        "interface",
+        "struct"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/render.go",
+          "symbols_used": [
+            "Render"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "render/reader.go",
+          "symbols_used": [
+            "Reader"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/data.go",
+          "symbols_used": [
+            "Data"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/any.go b/any.go\nnew file mode 100644\nindex 0000000..a0104dc\n--- /dev/null\n+++ b/any.go\n@@ -0,0 +1,10 @@\n+// Copyright 2022 Gin Core Team.  All rights reserved.\n+// Use of this source code is governed by a MIT style\n+// license that can be found in the LICENSE file.\n+\n+//go:build !go1.18\n+// +build !go1.18\n+\n+package gin\n+\n+type any = interface{}\ndiff --git a/binding/any.go b/binding/any.go\nnew file mode 100644\nindex 0000000..1331d39\n--- /dev/null\n+++ b/binding/any.go\n@@ -0,0 +1,10 @@\n+// Copyright 2022 Gin Core Team.  All rights reserved.\n+// Use of this source code is governed by a MIT style\n+// license that can be found in the LICENSE file.\n+\n+//go:build !go1.18\n+// +build !go1.18\n+\n+package binding\n+\n+type any = interface{}\ndiff --git a/binding/binding.go b/binding/binding.go\nindex 0414a34..703a1cf 100644\n--- a/binding/binding.go\n+++ b/binding/binding.go\n@@ -29,21 +29,21 @@ const (\n // the form POST.\n type Binding interface {\n \tName() string\n-\tBind(*http.Request, interface{}) error\n+\tBind(*http.Request, any) error\n }\n \n // BindingBody adds BindBody method to Binding. BindBody is similar with Bind,\n // but it reads the body from supplied bytes instead of req.Body.\n t"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "8860527de602b561500d68cb345c8b07de22805e",
+    "message": "feat attachment filename support utf8 (#3071)",
+    "changed_files": [
+      "context.go",
+      "utils.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "context.go",
+        "utils.go"
+      ],
+      "required_context_files": [
+        "render/text.go",
+        "render/yaml.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.2303,
+      "constraint_bearing_files": [
+        "render/text.go",
+        "render/yaml.go"
+      ],
+      "constraint_types_found": [
+        "struct"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/text.go",
+          "symbols_used": [
+            "String"
+          ],
+          "centrality": 0.00025,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/yaml.go",
+          "symbols_used": [
+            "YAML"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/context.go b/context.go\nindex d69df70..48d7550 100644\n--- a/context.go\n+++ b/context.go\n@@ -6,7 +6,6 @@ package gin\n \n import (\n \t\"errors\"\n-\t\"fmt\"\n \t\"io\"\n \t\"io/ioutil\"\n \t\"log\"\n@@ -1018,7 +1017,11 @@ func (c *Context) FileFromFS(filepath string, fs http.FileSystem) {\n // FileAttachment writes the specified file into the body stream in an efficient way\n // On the client side, the file will typically be downloaded with the given filename\n func (c *Context) FileAttachment(filepath, filename string) {\n-\tc.Writer.Header().Set(\"Content-Disposition\", fmt.Sprintf(\"attachment; filename=\\\"%s\\\"\", filename))\n+\tif isASCII(filename) {\n+\t\tc.Writer.Header().Set(\"Content-Disposition\", `attachment; filename=\"`+filename+`\"`)\n+\t} else {\n+\t\tc.Writer.Header().Set(\"Content-Disposition\", `attachment; filename*=UTF-8''`+url.QueryEscape(filename))\n+\t}\n \thttp.ServeFile(c.Writer, c.Request, filepath)\n }\n \ndiff --git a/context_test.go b/context_test.go\nindex 9e02aed..4eed164 100644\n--- a/context_test.go\n+++ b/context_test.go\n@@ -15,6 +15,7 @@ import (\n \t\"net\"\n \t\"net/http\"\n \t\"net/http/httptest\"\n+\t\"net/url\"\n \t\"os\"\n \t\"reflect\"\n \t\"strings\"\n@@ -1033,6 +1034,19 @@ func TestContextRenderAttachment(t *test"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "504ec594f8228ead9738ef42c13233eb42ed51d6",
+    "message": "fix:typo (#2975)",
+    "changed_files": [
+      "gin.go",
+      "ginS/gins.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "gin.go",
+        "ginS/gins.go"
+      ],
+      "required_context_files": [
+        "routergroup.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.235,
+      "constraint_bearing_files": [
+        "routergroup.go"
+      ],
+      "constraint_types_found": [
+        "interface"
+      ],
+      "required_context_details": [
+        {
+          "file": "routergroup.go",
+          "symbols_used": [
+            "IRouter",
+            "IRoutes"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/gin.go b/gin.go\nindex 45f4f2c..dac274c 100644\n--- a/gin.go\n+++ b/gin.go\n@@ -160,7 +160,7 @@ type Engine struct {\n var _ IRouter = &Engine{}\n \n // New returns a new blank Engine instance without any middleware attached.\n-// By default the configuration is:\n+// By default, the configuration is:\n // - RedirectTrailingSlash:  true\n // - RedirectFixedPath:      false\n // - HandleMethodNotAllowed: false\ndiff --git a/ginS/gins.go b/ginS/gins.go\nindex 3080fd3..ed054bf 100644\n--- a/ginS/gins.go\n+++ b/ginS/gins.go\n@@ -37,7 +37,7 @@ func SetHTMLTemplate(templ *template.Template) {\n \tengine().SetHTMLTemplate(templ)\n }\n \n-// NoRoute adds handlers for NoRoute. It return a 404 code by default.\n+// NoRoute adds handlers for NoRoute. It returns a 404 code by default.\n func NoRoute(handlers ...gin.HandlerFunc) {\n \tengine().NoRoute(handlers...)\n }\n@@ -118,7 +118,7 @@ func StaticFS(relativePath string, fs http.FileSystem) gin.IRoutes {\n \treturn engine().StaticFS(relativePath, fs)\n }\n \n-// Use attaches a global middleware to the router. ie. the middlewares attached though Use() will be\n+// Use attaches a global middleware to the router. i.e. the middlewares attached though Use() will be\n /"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "830a63d244ad200a196116f71b6c3c1eda3a538f",
+    "message": "fix: typo (#2973)",
+    "changed_files": [
+      "gin.go",
+      "logger.go",
+      "recovery.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "gin.go",
+        "logger.go",
+        "recovery.go"
+      ],
+      "required_context_files": [
+        "render/html.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.225,
+      "constraint_bearing_files": [
+        "render/html.go"
+      ],
+      "constraint_types_found": [
+        "interface"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/html.go",
+          "symbols_used": [
+            "Delims"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/gin.go b/gin.go\nindex d507b51..94de631 100644\n--- a/gin.go\n+++ b/gin.go\n@@ -205,7 +205,7 @@ func (engine *Engine) allocateContext() *Context {\n \treturn &Context{engine: engine, params: &v, skippedNodes: &skippedNodes}\n }\n \n-// Delims sets template left and right delims and returns a Engine instance.\n+// Delims sets template left and right delims and returns an Engine instance.\n func (engine *Engine) Delims(left, right string) *Engine {\n \tengine.delims = render.Delims{Left: left, Right: right}\n \treturn engine\n@@ -259,7 +259,7 @@ func (engine *Engine) SetFuncMap(funcMap template.FuncMap) {\n \tengine.FuncMap = funcMap\n }\n \n-// NoRoute adds handlers for NoRoute. It return a 404 code by default.\n+// NoRoute adds handlers for NoRoute. It returns a 404 code by default.\n func (engine *Engine) NoRoute(handlers ...HandlerFunc) {\n \tengine.noRoute = handlers\n \tengine.rebuild404Handlers()\n@@ -271,7 +271,7 @@ func (engine *Engine) NoMethod(handlers ...HandlerFunc) {\n \tengine.rebuild405Handlers()\n }\n \n-// Use attaches a global middleware to the router. ie. the middleware attached through Use() will be\n+// Use attaches a global middleware to the router. i.e. the middleware attached thr"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "2d3d6d2f1355f21a77f8ef6cf45a5bc531c8c935",
+    "message": "Provide custom options of TrustedPlatform for another CDN services (#2906)",
+    "changed_files": [
+      "context.go",
+      "gin.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "context.go",
+        "gin.go"
+      ],
+      "required_context_files": [
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.45,
+      "constraint_bearing_files": [
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go"
+      ],
+      "constraint_types_found": [
+        "interface"
+      ],
+      "required_context_details": [
+        {
+          "file": "binding/binding.go",
+          "symbols_used": [
+            "Default"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "binding/binding_nomsgpack.go",
+          "symbols_used": [
+            "Default"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/README.md b/README.md\nindex 0fa78ec..cad746d 100644\n--- a/README.md\n+++ b/README.md\n@@ -78,6 +78,7 @@ Gin is a web framework written in Go (Golang). It features a martini-like API wi\n     - [http2 server push](#http2-server-push)\n     - [Define format for the log of routes](#define-format-for-the-log-of-routes)\n     - [Set and get a cookie](#set-and-get-a-cookie)\n+  - [Don't trust all proxies](#don't-trust-all-proxies)\n   - [Testing](#testing)\n   - [Users](#users)\n \n@@ -2236,6 +2237,34 @@ func main() {\n }\n ```\n \n+**Notice:** If you are using a CDN service, you can set the `Engine.TrustedPlatform`\n+to skip TrustedProxies check, it has a higher priority than TrustedProxies. \n+Look at the example below:\n+```go\n+import (\n+\t\"fmt\"\n+\n+\t\"github.com/gin-gonic/gin\"\n+)\n+\n+func main() {\n+\n+\trouter := gin.Default()\n+\t// Use predefined header gin.PlatformXXX\n+\trouter.TrustedPlatform = gin.PlatformGoogleAppEngine\n+\t// Or set your own trusted request header for another trusted proxy service\n+\t// Don't set it to any suspect request header, it's unsafe\n+\trouter.TrustedPlatform = \"X-CDN-IP\"\n+\n+\trouter.GET(\"/\", func(c *gin.Context) {\n+\t\t// If you set TrustedPlatform, ClientIP() will resol"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "3fe928994b7ba7ed16b0c5114ca82a9dafa7a974",
+    "message": "Update the code logic for latestNode in tree.go (#2897)",
+    "changed_files": [
+      "context.go",
+      "gin.go",
+      "tree.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "context.go",
+        "gin.go",
+        "tree.go"
+      ],
+      "required_context_files": [
+        "render/text.go",
+        "render/html.go",
+        "internal/bytesconv/bytesconv_1.20.go",
+        "internal/bytesconv/bytesconv_1.19.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.4302,
+      "constraint_bearing_files": [
+        "render/text.go",
+        "render/html.go"
+      ],
+      "constraint_types_found": [
+        "interface",
+        "struct"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/text.go",
+          "symbols_used": [
+            "String"
+          ],
+          "centrality": 0.00025,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "render/html.go",
+          "symbols_used": [
+            "Delims"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "internal/bytesconv/bytesconv_1.20.go",
+          "symbols_used": [
+            "StringToBytes"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "internal/bytesconv/bytesconv_1.19.go",
+          "symbols_used": [
+            "StringToBytes"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/context.go b/context.go\nindex bea95cc..bc2c38e 100644\n--- a/context.go\n+++ b/context.go\n@@ -55,8 +55,9 @@ type Context struct {\n \tindex    int8\n \tfullPath string\n \n-\tengine *Engine\n-\tparams *Params\n+\tengine       *Engine\n+\tparams       *Params\n+\tskippedNodes *[]skippedNode\n \n \t// This mutex protect Keys map\n \tmu sync.RWMutex\n@@ -99,6 +100,7 @@ func (c *Context) reset() {\n \tc.queryCache = nil\n \tc.formCache = nil\n \t*c.params = (*c.params)[:0]\n+\t*c.skippedNodes = (*c.skippedNodes)[:0]\n }\n \n // Copy returns a copy of the current context that can be safely used outside the request's scope.\ndiff --git a/gin.go b/gin.go\nindex af83161..1774717 100644\n--- a/gin.go\n+++ b/gin.go\n@@ -144,6 +144,7 @@ type Engine struct {\n \tpool             sync.Pool\n \ttrees            methodTrees\n \tmaxParams        uint16\n+\tmaxSections      uint16\n \ttrustedProxies   []string\n \ttrustedCIDRs     []*net.IPNet\n }\n@@ -200,7 +201,8 @@ func Default() *Engine {\n \n func (engine *Engine) allocateContext() *Context {\n \tv := make(Params, 0, engine.maxParams)\n-\treturn &Context{engine: engine, params: &v}\n+\tskippedNodes := make([]skippedNode, 0, engine.maxSections)\n+\treturn &Context{engine: engine, params: &v, s"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "39181329dee3a14fa2210c72245811c07d5e72b6",
+    "message": "Tidy: Complete TrustedProxies feature (#2887)",
+    "changed_files": [
+      "context.go",
+      "gin.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "context.go",
+        "gin.go"
+      ],
+      "required_context_files": [
+        "render/html.go",
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.675,
+      "constraint_bearing_files": [
+        "render/html.go",
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go"
+      ],
+      "constraint_types_found": [
+        "interface"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/html.go",
+          "symbols_used": [
+            "Delims"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "binding/binding.go",
+          "symbols_used": [
+            "Default"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "binding/binding_nomsgpack.go",
+          "symbols_used": [
+            "Default"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/README.md b/README.md\nindex 10be5e1..62094ff 100644\n--- a/README.md\n+++ b/README.md\n@@ -2202,11 +2202,17 @@ Gin lets you specify which headers to hold the real client IP (if any),\n as well as specifying which proxies (or direct clients) you trust to\n specify one of these headers.\n \n-The `TrustedProxies` slice on your `gin.Engine` specifes network addresses or\n-network CIDRs from where clients which their request headers related to client\n+Use function `SetTrustedProxies()` on your `gin.Engine` to specify network addresses\n+or network CIDRs from where clients which their request headers related to client\n IP can be trusted. They can be IPv4 addresses, IPv4 CIDRs, IPv6 addresses or\n IPv6 CIDRs.\n \n+**Attention:** Gin trust all proxies by default if you don't specify a trusted \n+proxy using the function above, **this is NOT safe**. At the same time, if you don't\n+use any proxy, you can disable this feature by using `Engine.SetTrustedProxies(nil)`,\n+then `Context.ClientIP()` will return the remote address directly to avoid some\n+unnecessary computation.\n+\n ```go\n import (\n \t\"fmt\"\n@@ -2217,7 +2223,7 @@ import (\n func main() {\n \n \trouter := gin.Default()\n-\trouter.TrustedProxi"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "435a76b735db28b6223b323d30503de51c637b89",
+    "message": "chore(ci): update dependencies (#2827)",
+    "changed_files": [
+      "binding/form_mapping.go",
+      "binding/protobuf.go",
+      "binding/uri.go",
+      "mode.go",
+      "render/json.go",
+      "render/protobuf.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "binding/form_mapping.go",
+        "binding/protobuf.go",
+        "binding/uri.go",
+        "mode.go",
+        "render/json.go",
+        "render/protobuf.go"
+      ],
+      "required_context_files": [
+        "binding/binding_nomsgpack.go",
+        "binding/binding.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.45,
+      "constraint_bearing_files": [
+        "binding/binding_nomsgpack.go",
+        "binding/binding.go"
+      ],
+      "constraint_types_found": [
+        "interface"
+      ],
+      "required_context_details": [
+        {
+          "file": "binding/binding_nomsgpack.go",
+          "symbols_used": [
+            "Default"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "binding/binding.go",
+          "symbols_used": [
+            "Default"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/.github/dependabot.yml b/.github/dependabot.yml\nnew file mode 100644\nindex 0000000..632e8eb\n--- /dev/null\n+++ b/.github/dependabot.yml\n@@ -0,0 +1,10 @@\n+version: 2\n+updates:\n+  - package-ecosystem: github-actions\n+    directory: /\n+    schedule:\n+      interval: weekly\n+  - package-ecosystem: gomod\n+    directory: /\n+    schedule:\n+      interval: weekly\ndiff --git a/.github/workflows/gin.yml b/.github/workflows/gin.yml\nindex 85cc560..ab450ab 100644\n--- a/.github/workflows/gin.yml\n+++ b/.github/workflows/gin.yml\n@@ -9,12 +9,31 @@ on:\n       - master\n \n jobs:\n+  lint:\n+    runs-on: ubuntu-latest\n+    steps:\n+      - name: Setup go\n+        uses: actions/setup-go@v2\n+        with:\n+          go-version: '^1.16'\n+      - name: Checkout repository\n+        uses: actions/checkout@v2\n+      - name: Setup golangci-lint\n+        uses: golangci/golangci-lint-action@v2\n+        with:\n+          version: v1.41.1\n+          args: --verbose\n   test:\n     strategy:\n       matrix:\n         os: [ubuntu-latest, macos-latest]\n         go: [1.13, 1.14, 1.15, 1.16]\n         test-tags: ['', nomsgpack]\n+        include:\n+          - os: ubuntu-latest\n+            go-build: ~/.cache/go-build"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "dd8a27c0b6fbbfd192c5586ba3165700f535ac7f",
+    "message": "Setting trusted platform using an enum-like (#2739)",
+    "changed_files": [
+      "context.go",
+      "context_appengine.go",
+      "gin.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "context.go",
+        "context_appengine.go",
+        "gin.go"
+      ],
+      "required_context_files": [
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.45,
+      "constraint_bearing_files": [
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go"
+      ],
+      "constraint_types_found": [
+        "interface"
+      ],
+      "required_context_details": [
+        {
+          "file": "binding/binding.go",
+          "symbols_used": [
+            "Default"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "binding/binding_nomsgpack.go",
+          "symbols_used": [
+            "Default"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/context.go b/context.go\nindex 0c1fb07..5c1aba5 100644\n--- a/context.go\n+++ b/context.go\n@@ -9,6 +9,7 @@ import (\n \t\"fmt\"\n \t\"io\"\n \t\"io/ioutil\"\n+\t\"log\"\n \t\"math\"\n \t\"mime/multipart\"\n \t\"net\"\n@@ -731,17 +732,26 @@ func (c *Context) ShouldBindBodyWith(obj interface{}, bb binding.BindingBody) (e\n // If the headers are nots syntactically valid OR the remote IP does not correspong to a trusted proxy,\n // the remote IP (coming form Request.RemoteAddr) is returned.\n func (c *Context) ClientIP() string {\n-\tswitch {\n-\tcase c.engine.AppEngine:\n+\t// Check if we're running on a tursted platform\n+\tswitch c.engine.TrustedPlatform {\n+\tcase PlatformGoogleAppEngine:\n \t\tif addr := c.requestHeader(\"X-Appengine-Remote-Addr\"); addr != \"\" {\n \t\t\treturn addr\n \t\t}\n-\tcase c.engine.CloudflareProxy:\n+\tcase PlatformCloudflare:\n \t\tif addr := c.requestHeader(\"CF-Connecting-IP\"); addr != \"\" {\n \t\t\treturn addr\n \t\t}\n \t}\n \n+\t// Legacy \"AppEngine\" flag\n+\tif c.engine.AppEngine {\n+\t\tlog.Println(`The AppEngine flag is going to be deprecated. Please check issues #2723 and #2739 and use 'TrustedPlatform: gin.PlatformGoogleAppEngine' instead.`)\n+\t\tif addr := c.requestHeader(\"X-Appengine-Remote-Addr\"); addr != \"\" {\n+"
+  },
+  {
+    "repo_id": "gin",
+    "language": "go",
+    "sha": "bfc8ca285eb46dad60e037d57c545cd260636711",
+    "message": "feat(engine): add trustedproxies and remoteIP (#2632)",
+    "changed_files": [
+      "context.go",
+      "gin.go"
+    ],
+    "cdm": {
+      "changed_files": [
+        "context.go",
+        "gin.go"
+      ],
+      "required_context_files": [
+        "render/text.go",
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.5652,
+      "constraint_bearing_files": [
+        "render/text.go",
+        "binding/binding.go",
+        "binding/binding_nomsgpack.go"
+      ],
+      "constraint_types_found": [
+        "interface",
+        "struct"
+      ],
+      "required_context_details": [
+        {
+          "file": "render/text.go",
+          "symbols_used": [
+            "String"
+          ],
+          "centrality": 0.00025,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "struct"
+        },
+        {
+          "file": "binding/binding.go",
+          "symbols_used": [
+            "Default"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        },
+        {
+          "file": "binding/binding_nomsgpack.go",
+          "symbols_used": [
+            "Default"
+          ],
+          "centrality": 0.0,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "interface"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/README.md b/README.md\nindex eb84031..d4772d7 100644\n--- a/README.md\n+++ b/README.md\n@@ -2124,6 +2124,39 @@ func main() {\n }\n ```\n \n+## Don't trust all proxies\n+\n+Gin lets you specify which headers to hold the real client IP (if any),\n+as well as specifying which proxies (or direct clients) you trust to\n+specify one of these headers.\n+\n+The `TrustedProxies` slice on your `gin.Engine` specifes network addresses or\n+network CIDRs from where clients which their request headers related to client\n+IP can be trusted. They can be IPv4 addresses, IPv4 CIDRs, IPv6 addresses or\n+IPv6 CIDRs.\n+\n+```go\n+import (\n+\t\"fmt\"\n+\n+\t\"github.com/gin-gonic/gin\"\n+)\n+\n+func main() {\n+\n+\trouter := gin.Default()\n+\trouter.TrustedProxies = []string{\"192.168.1.2\"}\n+\n+\trouter.GET(\"/\", func(c *gin.Context) {\n+\t\t// If the client is 192.168.1.2, use the X-Forwarded-For\n+\t\t// header to deduce the original client IP from the trust-\n+\t\t// worthy parts of that header.\n+\t\t// Otherwise, simply return the direct client IP\n+\t\tfmt.Printf(\"ClientIP: %s\\n\", c.ClientIP())\n+\t})\n+\trouter.Run()\n+}\n+```\n \n ## Testing\n \ndiff --git a/context.go b/context.go\nindex 3d6b56d..1ba0fa2 100644\n--- a/context.go\n+++ b/context.go\n@"
+  },
+  {
+    "repo_id": "typescript",
+    "language": "typescript",
+    "sha": "5e8c261b6ab746213f19ee3501eb8c48a6215dd7",
+    "message": "dprint the codebase (#54820)",
+    "changed_files": [
+      "src/compiler/binder.ts",
+      "src/compiler/builder.ts",
+      "src/compiler/builderState.ts",
+      "src/compiler/checker.ts",
+      "src/compiler/commandLineParser.ts",
+      "src/compiler/core.ts",
+      "src/compiler/corePublic.ts",
+      "src/compiler/debug.ts",
+      "src/compiler/emitter.ts",
+      "src/compiler/factory/baseNodeFactory.ts",
+      "src/compiler/factory/emitHelpers.ts",
+      "src/compiler/factory/nodeConverters.ts",
+      "src/compiler/factory/nodeFactory.ts",
+      "src/compiler/factory/parenthesizerRules.ts",
+      "src/compiler/factory/utilities.ts",
+      "src/compiler/factory/utilitiesPublic.ts",
+      "src/compiler/moduleNameResolver.ts",
+      "src/compiler/moduleSpecifiers.ts",
+      "src/compiler/parser.ts",
+      "src/compiler/path.ts",
+      "src/compiler/perfLogger.ts",
+      "src/compiler/performance.ts",
+      "src/compiler/performanceCore.ts",
+      "src/compiler/program.ts",
+      "src/compiler/resolutionCache.ts",
+      "src/compiler/scanner.ts",
+      "src/compiler/semver.ts",
+      "src/compiler/sourcemap.ts",
+      "src/compiler/symbolWalker.ts",
+      "src/compiler/sys.ts",
+      "src/compiler/tracing.ts",
+      "src/compiler/transformer.ts",
+      "src/compiler/transformers/classFields.ts",
+      "src/compiler/transformers/classThis.ts",
+      "src/compiler/transformers/declarations.ts",
+      "src/compiler/transformers/declarations/diagnostics.ts",
+      "src/compiler/transformers/destructuring.ts",
+      "src/compiler/transformers/es2015.ts",
+      "src/compiler/transformers/es2016.ts",
+      "src/compiler/transformers/es2017.ts",
+      "src/compiler/transformers/es2018.ts",
+      "src/compiler/transformers/es2019.ts",
+      "src/compiler/transformers/es2020.ts",
+      "src/compiler/transformers/es2021.ts",
+      "src/compiler/transformers/esDecorators.ts",
+      "src/compiler/transformers/esnext.ts",
+      "src/compiler/transformers/generators.ts",
+      "src/compiler/transformers/jsx.ts",
+      "src/compiler/transformers/legacyDecorators.ts",
+      "src/compiler/transformers/module/esnextAnd2015.ts",
+      "src/compiler/transformers/module/module.ts",
+      "src/compiler/transformers/module/node.ts",
+      "src/compiler/transformers/module/system.ts",
+      "src/compiler/transformers/namedEvaluation.ts",
+      "src/compiler/transformers/taggedTemplate.ts",
+      "src/compiler/transformers/ts.ts",
+      "src/compiler/transformers/typeSerializer.ts",
+      "src/compiler/transformers/utilities.ts",
+      "src/compiler/tsbuild.ts",
+      "src/compiler/tsbuildPublic.ts",
+      "src/compiler/types.ts",
+      "src/compiler/utilities.ts",
+      "src/compiler/utilitiesPublic.ts",
+      "src/compiler/visitorPublic.ts",
+      "src/compiler/watch.ts",
+      "src/compiler/watchPublic.ts",
+      "src/compiler/watchUtilities.ts"
+    ],
+    "cdm": {
+      "changed_files": [
+        "src/compiler/binder.ts",
+        "src/compiler/builder.ts",
+        "src/compiler/builderState.ts",
+        "src/compiler/checker.ts",
+        "src/compiler/commandLineParser.ts",
+        "src/compiler/core.ts",
+        "src/compiler/corePublic.ts",
+        "src/compiler/debug.ts",
+        "src/compiler/emitter.ts",
+        "src/compiler/factory/baseNodeFactory.ts",
+        "src/compiler/factory/emitHelpers.ts",
+        "src/compiler/factory/nodeConverters.ts",
+        "src/compiler/factory/nodeFactory.ts",
+        "src/compiler/factory/parenthesizerRules.ts",
+        "src/compiler/factory/utilities.ts",
+        "src/compiler/factory/utilitiesPublic.ts",
+        "src/compiler/moduleNameResolver.ts",
+        "src/compiler/moduleSpecifiers.ts",
+        "src/compiler/parser.ts",
+        "src/compiler/path.ts",
+        "src/compiler/perfLogger.ts",
+        "src/compiler/performance.ts",
+        "src/compiler/performanceCore.ts",
+        "src/compiler/program.ts",
+        "src/compiler/resolutionCache.ts",
+        "src/compiler/scanner.ts",
+        "src/compiler/semver.ts",
+        "src/compiler/sourcemap.ts",
+        "src/compiler/symbolWalker.ts",
+        "src/compiler/sys.ts",
+        "src/compiler/tracing.ts",
+        "src/compiler/transformer.ts",
+        "src/compiler/transformers/classFields.ts",
+        "src/compiler/transformers/classThis.ts",
+        "src/compiler/transformers/declarations.ts",
+        "src/compiler/transformers/declarations/diagnostics.ts",
+        "src/compiler/transformers/destructuring.ts",
+        "src/compiler/transformers/es2015.ts",
+        "src/compiler/transformers/es2016.ts",
+        "src/compiler/transformers/es2017.ts",
+        "src/compiler/transformers/es2018.ts",
+        "src/compiler/transformers/es2019.ts",
+        "src/compiler/transformers/es2020.ts",
+        "src/compiler/transformers/es2021.ts",
+        "src/compiler/transformers/esDecorators.ts",
+        "src/compiler/transformers/esnext.ts",
+        "src/compiler/transformers/generators.ts",
+        "src/compiler/transformers/jsx.ts",
+        "src/compiler/transformers/legacyDecorators.ts",
+        "src/compiler/transformers/module/esnextAnd2015.ts",
+        "src/compiler/transformers/module/module.ts",
+        "src/compiler/transformers/module/node.ts",
+        "src/compiler/transformers/module/system.ts",
+        "src/compiler/transformers/namedEvaluation.ts",
+        "src/compiler/transformers/taggedTemplate.ts",
+        "src/compiler/transformers/ts.ts",
+        "src/compiler/transformers/typeSerializer.ts",
+        "src/compiler/transformers/utilities.ts",
+        "src/compiler/tsbuild.ts",
+        "src/compiler/tsbuildPublic.ts",
+        "src/compiler/types.ts",
+        "src/compiler/utilities.ts",
+        "src/compiler/utilitiesPublic.ts",
+        "src/compiler/visitorPublic.ts",
+        "src/compiler/watch.ts",
+        "src/compiler/watchPublic.ts",
+        "src/compiler/watchUtilities.ts"
+      ],
+      "required_context_files": [
+        "src/compiler/_namespaces/ts.ts"
+      ],
+      "context_distance_hops": 1,
+      "irreducibility_score": 0.2203,
+      "constraint_bearing_files": [
+        "src/compiler/_namespaces/ts.ts"
+      ],
+      "constraint_types_found": [
+        "cross_file_method"
+      ],
+      "required_context_details": [
+        {
+          "file": "src/compiler/_namespaces/ts.ts",
+          "symbols_used": [
+            "performance",
+            "moduleSpecifiers"
+          ],
+          "centrality": 0.96801,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
+        }
+      ]
+    },
+    "diff_preview": "diff --git a/.dprint.jsonc b/.dprint.jsonc\nnew file mode 100644\nindex 0000000000..612772f8aa\n--- /dev/null\n+++ b/.dprint.jsonc\n@@ -0,0 +1,55 @@\n+{\n+    \"indentWidth\": 4,\n+    \"lineWidth\": 1000,\n+    \"newLineKind\": \"auto\",\n+    \"useTabs\": false,\n+    \"typescript\": {\n+        \"semiColons\": \"always\",\n+        \"quoteStyle\": \"preferDouble\",\n+        \"quoteProps\": \"consistent\",\n+        \"useBraces\": \"whenNotSingleLine\",\n+        \"bracePosition\": \"sameLineUnlessHanging\",\n+        \"singleBodyPosition\": \"sameLine\",\n+        \"nextControlFlowPosition\": \"nextLine\", // Stroustrup style braces.\n+        \"trailingCommas\": \"onlyMultiLine\",\n+        \"preferHanging\": false,\n+        \"operatorPosition\": \"maintain\",\n+\n+        \"arrowFunction.useParentheses\": \"preferNone\",\n+        \"conditionalExpression.linePerExpression\": false, // Keep our \"match/case\"-ish conditionals.\n+        \"functionExpression.spaceAfterFunctionKeyword\": true,\n+        \"importDeclaration.forceMultiLine\": true,\n+        \"constructorType.spaceAfterNewKeyword\": true,\n+        \"constructSignature.spaceAfterNewKeyword\": true,\n+\n+        // Let eslint-plugin-simple-import-sort handle this.\n+        \"module.sortImportDeclarations\": \"m"
+  }
+]
