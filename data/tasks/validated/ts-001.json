@@ -1,0 +1,47 @@
+{
+  "task_id": "ts-001",
+  "repo_id": "typescript",
+  "repo_url": "https://github.com/microsoft/TypeScript",
+  "commit_sha": "d6171b9d0b0020b383ae3b552724380a7a0b3cdc",
+  "language": "typescript",
+  "task_category": "bug_investigation",
+  "difficulty_level": "medium",
+  "difficulty_score": 0.52,
+  "context_distance_hops": 1,
+  "irreducibility_score": 1.0,
+  "required_context_files": [
+    "src/compiler/types.ts"
+  ],
+  "changed_files": [
+    "src/compiler/checker.ts",
+    "src/compiler/utilities.ts"
+  ],
+  "constraint_types": ["ast_node_type", "assignment_semantics"],
+  "prompt": "The TypeScript checker provides a contextual `this` type to function expressions and arrow functions assigned to object properties via the `=` operator: in `obj.method = function() { this.x; }`, the type of `this` inside the function is inferred as the type of `obj`. However, this contextual `this` typing does not apply when compound assignment operators are used. For example, `obj.method ??= function() { this.x; }` and `obj.method ||= function() { this.x; }` do not receive a contextual `this` type even though they are also assignments to object properties. Extend the checker so that these compound assignment forms also provide contextual `this` typing to the assigned function expression. The fix involves replacing manual SyntaxKind checks with the appropriate utility predicate in checker.ts and utilities.ts.",
+  "human_annotation_notes": "types.ts defines the BinaryExpression interface and the full set of assignment operator SyntaxKind values including the logical assignment operators (SyntaxKind.QuestionQuestionEqualsToken, AmpersandAmpersandEqualsToken, BarBarEqualsToken). The existing code checks `operatorToken.kind === SyntaxKind.EqualsToken` — this only catches plain `=` assignment, missing all compound forms. The correct predicate `isAssignmentExpression(parent)` is already defined in utilities.ts and handles the full set of assignment operators. Without reading types.ts, an agent will not understand the SyntaxKind enum structure and the distinction between EqualsToken and the logical/compound assignment tokens, leading to incomplete fixes that still miss some assignment forms.",
+  "assert_design": {
+    "retrieval_check": ["src/compiler/types.ts"],
+    "constraint_symbols": ["isAssignmentExpression", "BinaryExpression", "SyntaxKind", "EqualsToken"],
+    "cpc_description": "Solution must: (1) replace the manual kind === SyntaxKind.EqualsToken check in checker.ts with isAssignmentExpression(parent), (2) update the same pattern in utilities.ts's getNextJSDocCommentLocation, (3) use the existing isAssignmentExpression utility rather than adding a new predicate, (4) not break existing tests for plain = assignment"
+  },
+  "constraint_propagation_targets": [
+    {
+      "path": "checker_predicate",
+      "pattern": "isAssignmentExpression",
+      "description": "checker.ts must use isAssignmentExpression instead of manual SyntaxKind.EqualsToken check"
+    },
+    {
+      "path": "utilities_predicate",
+      "pattern": "isAssignmentExpression",
+      "description": "utilities.ts getNextJSDocCommentLocation must also use isAssignmentExpression"
+    },
+    {
+      "path": "target_narrowing",
+      "pattern": "parent\\.left",
+      "description": "After isAssignmentExpression check, target extraction must use parent.left directly without casting"
+    }
+  ],
+  "extraction_method": "automated",
+  "architecture_pattern": "ast_pattern_matching",
+  "timeout": 90000
+}

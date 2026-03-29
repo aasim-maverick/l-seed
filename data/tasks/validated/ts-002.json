@@ -1,0 +1,53 @@
+{
+  "task_id": "ts-002",
+  "repo_id": "typescript",
+  "repo_url": "https://github.com/microsoft/TypeScript",
+  "commit_sha": "cac899d44d19a2753e6cae9ebc8bd291fa571c76",
+  "language": "typescript",
+  "task_category": "bug_investigation",
+  "difficulty_level": "hard",
+  "difficulty_score": 0.75,
+  "context_distance_hops": 1,
+  "irreducibility_score": 1.0,
+  "required_context_files": [
+    "src/compiler/types.ts"
+  ],
+  "changed_files": [
+    "src/compiler/checker.ts",
+    "src/compiler/factory/utilities.ts",
+    "src/compiler/utilities.ts"
+  ],
+  "constraint_types": ["type_narrowing", "literal_widening", "assignment_semantics"],
+  "prompt": "TypeScript inconsistently widens widening literal types across semantically equivalent assignment patterns. Given `const empty: '' = ''; let foo = empty;`, the compound assignment `foo += 'bar'` correctly widens `foo` to `string`, but the equivalent expression assignment `foo = foo + 'bar'` raises a type error: Type 'string' is not assignable to type ''. The same inconsistency exists for numeric literal types: `let t = 0 as 0; t = t + 42` should widen `t` to `number` but does not. The fix requires detecting when an assignment's right-hand side is a compound-like binary expression (arithmetic, bitwise shift, or other higher-precedence binary operators) and widening the target variable's declared literal type through base type extraction at two control flow points in checker.ts. The detection logic should be extracted into a new exported predicate `isInCompoundLikeAssignment` in utilities.ts. Also export `isShiftOperatorOrHigher` from factory/utilities.ts since it is needed by the new predicate.",
+  "human_annotation_notes": "types.ts defines the full hierarchy of types needed here: TypeFlags.Union for the union type branch in checker.ts, UnionType for the getAssignmentReducedType call, BinaryExpression for the compound-like detection, ShiftOperatorOrHigher as the type guard needed in isCompoundLikeAssignment, and the AssignmentExpression generic type used in the isCompoundLikeAssignment function signature. Without types.ts, the agent cannot correctly write `isCompoundLikeAssignment(assignment: AssignmentExpression<EqualsToken>)` or understand the type hierarchy behind `getBaseTypeOfLiteralType` vs `getWidenedLiteralType`. The refactoring of getAssignmentTargetKind into getAssignmentTarget + getAssignmentTargetKind is a necessary prerequisite — the new getAssignmentTarget returns the assignment node itself (for further inspection) rather than the AssignmentKind enum value.",
+  "assert_design": {
+    "retrieval_check": ["src/compiler/types.ts"],
+    "constraint_symbols": ["isInCompoundLikeAssignment", "getBaseTypeOfLiteralType", "isShiftOperatorOrHigher", "AssignmentExpression", "ShiftOperatorOrHigher"],
+    "cpc_description": "Solution must: (1) export isShiftOperatorOrHigher from factory/utilities.ts, (2) define isInCompoundLikeAssignment in utilities.ts using getAssignmentTarget and isShiftOperatorOrHigher, (3) call getBaseTypeOfLiteralType on the declared type when isInCompoundLikeAssignment is true at the two affected points in checker.ts, (4) refactor getAssignmentTargetKind to separate target identification from kind determination so the target node is accessible for compound-like detection"
+  },
+  "constraint_propagation_targets": [
+    {
+      "path": "shift_operator_export",
+      "pattern": "export function isShiftOperatorOrHigher",
+      "description": "isShiftOperatorOrHigher must be exported from factory/utilities.ts"
+    },
+    {
+      "path": "compound_like_predicate",
+      "pattern": "isInCompoundLikeAssignment",
+      "description": "New predicate must be defined and exported from utilities.ts"
+    },
+    {
+      "path": "base_type_extraction",
+      "pattern": "getBaseTypeOfLiteralType",
+      "description": "checker.ts must call getBaseTypeOfLiteralType when isInCompoundLikeAssignment is true"
+    },
+    {
+      "path": "assignment_target_refactor",
+      "pattern": "getAssignmentTarget",
+      "description": "getAssignmentTargetKind must be refactored to expose the assignment node for inspection"
+    }
+  ],
+  "extraction_method": "automated",
+  "architecture_pattern": "type_flow_analysis",
+  "timeout": 120000
+}

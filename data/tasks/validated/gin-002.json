@@ -1,0 +1,47 @@
+{
+  "task_id": "gin-002",
+  "repo_id": "gin",
+  "repo_url": "https://github.com/gin-gonic/gin",
+  "commit_sha": "f197a8bae0c87e1b7cc2e32e399a40665a82f077",
+  "language": "go",
+  "task_category": "feature_implementation",
+  "difficulty_level": "medium",
+  "difficulty_score": 0.45,
+  "context_distance_hops": 1,
+  "irreducibility_score": 0.35,
+  "required_context_files": [
+    "routergroup.go"
+  ],
+  "changed_files": [
+    "context.go",
+    "gin.go"
+  ],
+  "constraint_types": ["struct_embedding", "feature_flag"],
+  "prompt": "The gin.Context type implements the standard Go context.Context interface (with Deadline, Done, Err, and Value methods) but the implementations are misleading: they return zero values unless the request has a non-nil context, without any opt-in from the application. This means code that passes a *gin.Context to functions expecting context.Context does not get deadline or cancellation propagation from the HTTP request context. Add an opt-in boolean field ContextWithFallback to the Engine struct. When this flag is true, Context.Deadline(), Context.Done(), Context.Err(), and Context.Value() should delegate to the underlying http.Request.Context() rather than returning zero values. All four methods must guard on this flag before delegating.",
+  "human_annotation_notes": "routergroup.go defines the RouterGroup struct which is embedded in Engine. Understanding Engine's full struct layout — including the embedded RouterGroup and the existing fields like HTMLRender, pool, trees — helps an agent position ContextWithFallback correctly and understand gin's convention for Engine-level configuration fields. The CDM output (render/text.go, render/html.go) is entirely noise with no relevance to this change. Note: this task has weaker external required context than others — the key reasoning challenge is correctly threading ContextWithFallback through all four context.Context interface methods consistently, and understanding why a boolean flag on Engine (not on Context) is the right abstraction.",
+  "assert_design": {
+    "retrieval_check": ["routergroup.go"],
+    "constraint_symbols": ["ContextWithFallback", "c.engine", "c.Request.Context"],
+    "cpc_description": "Solution must: (1) add ContextWithFallback bool field to Engine struct in gin.go, (2) guard all four methods — Deadline, Done, Err, Value — with the flag check before delegating to c.Request.Context(), (3) preserve existing nil-check behavior when flag is false, (4) flag must be on Engine not on Context"
+  },
+  "constraint_propagation_targets": [
+    {
+      "path": "engine_field",
+      "pattern": "ContextWithFallback\\s+bool",
+      "description": "ContextWithFallback bool field must be added to Engine struct"
+    },
+    {
+      "path": "deadline_guard",
+      "pattern": "c\\.engine\\.ContextWithFallback",
+      "description": "All four context methods must check c.engine.ContextWithFallback before delegating"
+    },
+    {
+      "path": "request_context_delegation",
+      "pattern": "c\\.Request\\.Context\\(\\)",
+      "description": "When flag is set, methods must delegate to the HTTP request's context"
+    }
+  ],
+  "extraction_method": "semi-automated",
+  "architecture_pattern": "feature_flag",
+  "timeout": 90000
+}

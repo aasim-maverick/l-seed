@@ -18,9 +18,9 @@
         "src/flask/templating.py"
       ],
       "required_context_files": [
-        "src/flask/testing.py",
         "src/flask/globals.py",
-        "src/flask/helpers.py"
+        "src/flask/helpers.py",
+        "src/flask/testing.py"
       ],
       "context_distance_hops": 1,
       "irreducibility_score": 0.2568,
@@ -32,23 +32,13 @@
       ],
       "required_context_details": [
         {
-          "file": "src/flask/testing.py",
-          "symbols_used": [
-            "FlaskClient"
-          ],
-          "centrality": 0.01931,
-          "hop_distance": 1,
-          "is_constraint_bearing": false,
-          "constraint_type": ""
-        },
-        {
           "file": "src/flask/globals.py",
           "symbols_used": [
-            "request",
-            "session",
-            "_cv_app",
             "_cv_request",
-            "request_ctx"
+            "request_ctx",
+            "session",
+            "request",
+            "_cv_app"
           ],
           "centrality": 0.07223,
           "hop_distance": 1,
@@ -61,6 +51,16 @@
             "stream_with_context"
           ],
           "centrality": 0.0117,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
           "hop_distance": 1,
           "is_constraint_bearing": false,
           "constraint_type": ""
@@ -88,9 +88,9 @@
         "src/flask/templating.py"
       ],
       "required_context_files": [
-        "src/flask/testing.py",
         "src/flask/globals.py",
-        "src/flask/helpers.py"
+        "src/flask/helpers.py",
+        "src/flask/testing.py"
       ],
       "context_distance_hops": 1,
       "irreducibility_score": 0.2568,
@@ -102,23 +102,13 @@
       ],
       "required_context_details": [
         {
-          "file": "src/flask/testing.py",
-          "symbols_used": [
-            "FlaskClient"
-          ],
-          "centrality": 0.01931,
-          "hop_distance": 1,
-          "is_constraint_bearing": false,
-          "constraint_type": ""
-        },
-        {
           "file": "src/flask/globals.py",
           "symbols_used": [
-            "request",
-            "session",
-            "_cv_app",
             "_cv_request",
-            "request_ctx"
+            "request_ctx",
+            "session",
+            "request",
+            "_cv_app"
           ],
           "centrality": 0.07223,
           "hop_distance": 1,
@@ -131,6 +121,16 @@
             "stream_with_context"
           ],
           "centrality": 0.0117,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
+        },
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
           "hop_distance": 1,
           "is_constraint_bearing": false,
           "constraint_type": ""
@@ -154,8 +154,8 @@
         "src/flask/sessions.py"
       ],
       "required_context_files": [
-        "src/flask/globals.py",
-        "src/flask/wrappers.py"
+        "src/flask/wrappers.py",
+        "src/flask/globals.py"
       ],
       "context_distance_hops": 1,
       "irreducibility_score": 0.2305,
@@ -167,17 +167,6 @@
       ],
       "required_context_details": [
         {
-          "file": "src/flask/globals.py",
-          "symbols_used": [
-            "request",
-            "session"
-          ],
-          "centrality": 0.07223,
-          "hop_distance": 1,
-          "is_constraint_bearing": true,
-          "constraint_type": "cross_file_method"
-        },
-        {
           "file": "src/flask/wrappers.py",
           "symbols_used": [
             "Request"
@@ -186,6 +175,17 @@
           "hop_distance": 1,
           "is_constraint_bearing": false,
           "constraint_type": ""
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "session",
+            "request"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
         }
       ]
     },
@@ -206,8 +206,8 @@
         "src/flask/sessions.py"
       ],
       "required_context_files": [
-        "src/flask/globals.py",
-        "src/flask/wrappers.py"
+        "src/flask/wrappers.py",
+        "src/flask/globals.py"
       ],
       "context_distance_hops": 1,
       "irreducibility_score": 0.2305,
@@ -219,17 +219,6 @@
       ],
       "required_context_details": [
         {
-          "file": "src/flask/globals.py",
-          "symbols_used": [
-            "request",
-            "session"
-          ],
-          "centrality": 0.07223,
-          "hop_distance": 1,
-          "is_constraint_bearing": true,
-          "constraint_type": "cross_file_method"
-        },
-        {
           "file": "src/flask/wrappers.py",
           "symbols_used": [
             "Request"
@@ -238,6 +227,17 @@
           "hop_distance": 1,
           "is_constraint_bearing": false,
           "constraint_type": ""
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "session",
+            "request"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
         }
       ]
     },
@@ -258,8 +258,8 @@
         "src/flask/wrappers.py"
       ],
       "required_context_files": [
-        "src/flask/testing.py",
-        "src/flask/globals.py"
+        "src/flask/globals.py",
+        "src/flask/testing.py"
       ],
       "context_distance_hops": 1,
       "irreducibility_score": 0.1951,
@@ -271,16 +271,6 @@
       ],
       "required_context_details": [
         {
-          "file": "src/flask/testing.py",
-          "symbols_used": [
-            "FlaskClient"
-          ],
-          "centrality": 0.01931,
-          "hop_distance": 1,
-          "is_constraint_bearing": false,
-          "constraint_type": ""
-        },
-        {
           "file": "src/flask/globals.py",
           "symbols_used": [
             "request",
@@ -290,6 +280,16 @@
           "hop_distance": 1,
           "is_constraint_bearing": true,
           "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
         }
       ]
     },
@@ -310,8 +310,8 @@
         "src/flask/wrappers.py"
       ],
       "required_context_files": [
-        "src/flask/testing.py",
-        "src/flask/globals.py"
+        "src/flask/globals.py",
+        "src/flask/testing.py"
       ],
       "context_distance_hops": 1,
       "irreducibility_score": 0.1951,
@@ -323,16 +323,6 @@
       ],
       "required_context_details": [
         {
-          "file": "src/flask/testing.py",
-          "symbols_used": [
-            "FlaskClient"
-          ],
-          "centrality": 0.01931,
-          "hop_distance": 1,
-          "is_constraint_bearing": false,
-          "constraint_type": ""
-        },
-        {
           "file": "src/flask/globals.py",
           "symbols_used": [
             "request",
@@ -342,6 +332,16 @@
           "hop_distance": 1,
           "is_constraint_bearing": true,
           "constraint_type": "cross_file_method"
+        },
+        {
+          "file": "src/flask/testing.py",
+          "symbols_used": [
+            "FlaskClient"
+          ],
+          "centrality": 0.01931,
+          "hop_distance": 1,
+          "is_constraint_bearing": false,
+          "constraint_type": ""
         }
       ]
     },
@@ -374,31 +374,20 @@
         "src/flask/wrappers.py"
       ],
       "required_context_files": [
-        "src/flask/globals.py",
-        "src/flask/typing.py"
+        "src/flask/typing.py",
+        "src/flask/globals.py"
       ],
       "context_distance_hops": 1,
       "irreducibility_score": 0.3084,
       "constraint_bearing_files": [
-        "src/flask/globals.py",
-        "src/flask/typing.py"
+        "src/flask/typing.py",
+        "src/flask/globals.py"
       ],
       "constraint_types_found": [
-        "type_alias",
-        "cross_file_method"
+        "cross_file_method",
+        "type_alias"
       ],
       "required_context_details": [
-        {
-          "file": "src/flask/globals.py",
-          "symbols_used": [
-            "request",
-            "current_app"
-          ],
-          "centrality": 0.07223,
-          "hop_distance": 1,
-          "is_constraint_bearing": true,
-          "constraint_type": "cross_file_method"
-        },
         {
           "file": "src/flask/typing.py",
           "symbols_used": [
@@ -410,6 +399,17 @@
           "hop_distance": 1,
           "is_constraint_bearing": true,
           "constraint_type": "type_alias"
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "current_app"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
         }
       ]
     },
@@ -442,31 +442,20 @@
         "src/flask/wrappers.py"
       ],
       "required_context_files": [
-        "src/flask/globals.py",
-        "src/flask/typing.py"
+        "src/flask/typing.py",
+        "src/flask/globals.py"
       ],
       "context_distance_hops": 1,
       "irreducibility_score": 0.3084,
       "constraint_bearing_files": [
-        "src/flask/globals.py",
-        "src/flask/typing.py"
+        "src/flask/typing.py",
+        "src/flask/globals.py"
       ],
       "constraint_types_found": [
-        "type_alias",
-        "cross_file_method"
+        "cross_file_method",
+        "type_alias"
       ],
       "required_context_details": [
-        {
-          "file": "src/flask/globals.py",
-          "symbols_used": [
-            "request",
-            "current_app"
-          ],
-          "centrality": 0.07223,
-          "hop_distance": 1,
-          "is_constraint_bearing": true,
-          "constraint_type": "cross_file_method"
-        },
         {
           "file": "src/flask/typing.py",
           "symbols_used": [
@@ -478,6 +467,17 @@
           "hop_distance": 1,
           "is_constraint_bearing": true,
           "constraint_type": "type_alias"
+        },
+        {
+          "file": "src/flask/globals.py",
+          "symbols_used": [
+            "request",
+            "current_app"
+          ],
+          "centrality": 0.07223,
+          "hop_distance": 1,
+          "is_constraint_bearing": true,
+          "constraint_type": "cross_file_method"
         }
       ]
     },

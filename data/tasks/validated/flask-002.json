@@ -1,0 +1,52 @@
+{
+  "task_id": "flask-002",
+  "repo_id": "flask",
+  "repo_url": "https://github.com/pallets/flask",
+  "commit_sha": "6f2014d353d514e404c1f40e8f0a24e2bf62b941",
+  "language": "python",
+  "task_category": "feature_implementation",
+  "difficulty_level": "easy",
+  "difficulty_score": 0.28,
+  "context_distance_hops": 1,
+  "irreducibility_score": 0.20,
+  "required_context_files": [
+    "src/flask/globals.py"
+  ],
+  "changed_files": [
+    "src/flask/app.py",
+    "src/flask/wrappers.py"
+  ],
+  "constraint_types": ["proxy_architecture", "config_fallback"],
+  "prompt": "Flask currently only exposes MAX_CONTENT_LENGTH as a per-application config key, and even then the Request.max_content_length property can only be read, not overridden per-request. Werkzeug also provides two other form-parsing limits — max_form_memory_size (maximum size of any non-file multipart field) and max_form_parts (maximum number of multipart fields) — but these have no Flask config equivalents at all. Add MAX_FORM_MEMORY_SIZE (default 500_000) and MAX_FORM_PARTS (default 1_000) as Flask config keys in app.py. Then expose all three limits as settable properties on the Request class in wrappers.py so that individual views can override them for a specific request. Each property must handle three cases in priority order: a per-request instance override if set, the Flask app config value if inside an app context, and otherwise the Werkzeug base class default.",
+  "human_annotation_notes": "globals.py defines the current_app proxy via LocalProxy. The critical constraint is how current_app behaves outside an app context: `if not current_app` evaluates to True when there is no active application context, at which point the property must fall back to `super().max_form_memory_size` (the Werkzeug default) rather than accessing config. An agent that never reads globals.py will likely write a simpler property that always tries to access current_app.config and raises a RuntimeError outside an app context, or will omit the out-of-context fallback entirely. The three-way priority chain (instance override → config → Werkzeug default) is the core invariant. Testing.py in the CDM output is noise.",
+  "assert_design": {
+    "retrieval_check": ["src/flask/globals.py"],
+    "constraint_symbols": ["current_app", "MAX_FORM_MEMORY_SIZE", "MAX_FORM_PARTS", "super"],
+    "cpc_description": "Solution must: (1) add MAX_FORM_MEMORY_SIZE and MAX_FORM_PARTS defaults to app.py config dict, (2) implement max_form_memory_size and max_form_parts as properties with setters on Request, (3) check for per-request instance override first, (4) check app context via current_app before accessing config, (5) fall back to super() when outside app context"
+  },
+  "constraint_propagation_targets": [
+    {
+      "path": "config_defaults",
+      "pattern": "MAX_FORM_MEMORY_SIZE",
+      "description": "Config key must be added to Flask default config in app.py"
+    },
+    {
+      "path": "property_getter",
+      "pattern": "@property",
+      "description": "max_form_memory_size and max_form_parts must be implemented as properties"
+    },
+    {
+      "path": "app_context_guard",
+      "pattern": "current_app",
+      "description": "Properties must check current_app to distinguish in-context from out-of-context"
+    },
+    {
+      "path": "werkzeug_fallback",
+      "pattern": "super\\(\\)",
+      "description": "Must fall back to Werkzeug base class defaults when outside app context"
+    }
+  ],
+  "extraction_method": "semi-automated",
+  "architecture_pattern": "proxy_property",
+  "timeout": 90000
+}

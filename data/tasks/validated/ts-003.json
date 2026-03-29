@@ -1,0 +1,51 @@
+{
+  "task_id": "ts-003",
+  "repo_id": "typescript",
+  "repo_url": "https://github.com/microsoft/TypeScript",
+  "commit_sha": "43201044042abc3ebbe65e85e4c0a5c2e87314d8",
+  "language": "typescript",
+  "task_category": "bug_investigation",
+  "difficulty_level": "hard",
+  "difficulty_score": 0.78,
+  "context_distance_hops": 1,
+  "irreducibility_score": 1.0,
+  "required_context_files": [
+    "src/compiler/types.ts"
+  ],
+  "changed_files": [
+    "src/compiler/checker.ts"
+  ],
+  "constraint_types": ["tuple_type_system", "indexed_access"],
+  "prompt": "With the noUncheckedIndexedAccess compiler option enabled, accessing element 0 of a tuple type like [...number[], number] incorrectly produces type `number | undefined` instead of `number`. The last element is a fixed trailing element, making index 0 guaranteed to be within the range of the tuple's total fixed-element coverage — it should never be undefined. More generally, any index within the range [0, fixedLength + endFixedLength) should not include undefined, where fixedLength counts leading fixed elements and endFixedLength counts trailing fixed elements. Two separate code paths in checker.ts handle indexed access on tuples and both need to be updated. Extract the total-fixed-element-count computation into a helper `getTotalFixedElementCount(type: TupleType)`, and extract the out-of-start-count element type resolution into a helper `getTupleElementTypeOutOfStartCount`. Use these helpers to replace the duplicated inline logic at both call sites.",
+  "human_annotation_notes": "types.ts defines TupleType with its fixedLength field (count of leading fixed elements) and ElementFlags enum with values Fixed, Optional, Rest, Variadic. The function getEndElementCount (already in checker.ts) computes trailing fixed element count using ElementFlags.Fixed. The key insight is that TupleType.fixedLength only counts LEADING fixed elements — a tuple like [...T[], number] has fixedLength=0 but one trailing fixed element. getTotalFixedElementCount must be defined as fixedLength + getEndElementCount(type, ElementFlags.Fixed). Without reading types.ts, an agent will not find TupleType.fixedLength or ElementFlags.Fixed, making it impossible to compute the total fixed count correctly. The accessFlags & AccessFlags.IncludeUndefined parameter controls whether the missing type or undefined type should be appended, and AccessFlags is also in types.ts.",
+  "assert_design": {
+    "retrieval_check": ["src/compiler/types.ts"],
+    "constraint_symbols": ["TupleType", "ElementFlags", "fixedLength", "getTotalFixedElementCount", "getTupleElementTypeOutOfStartCount", "AccessFlags"],
+    "cpc_description": "Solution must: (1) define getTotalFixedElementCount using type.fixedLength + getEndElementCount(type, ElementFlags.Fixed), (2) define getTupleElementTypeOutOfStartCount taking a type, index, and optional undefined/missing type parameter, (3) use total fixed count (not just fixedLength) in both the indexTypeLessThan comparisons that gate generic tuple handling, (4) replace both existing mapType(objectType, ...) lambda calls with the new helper"
+  },
+  "constraint_propagation_targets": [
+    {
+      "path": "total_fixed_count_helper",
+      "pattern": "getTotalFixedElementCount",
+      "description": "Must define getTotalFixedElementCount combining fixedLength and trailing fixed count"
+    },
+    {
+      "path": "end_element_count_usage",
+      "pattern": "getEndElementCount.*ElementFlags\\.Fixed",
+      "description": "getTotalFixedElementCount must use getEndElementCount with ElementFlags.Fixed for trailing elements"
+    },
+    {
+      "path": "out_of_start_count_helper",
+      "pattern": "getTupleElementTypeOutOfStartCount",
+      "description": "Must define and use getTupleElementTypeOutOfStartCount to replace both inline mapType lambdas"
+    },
+    {
+      "path": "index_type_less_than_update",
+      "pattern": "getTotalFixedElementCount",
+      "description": "Both indexTypeLessThan calls guarding generic tuple handling must use the new total count"
+    }
+  ],
+  "extraction_method": "automated",
+  "architecture_pattern": "type_system",
+  "timeout": 120000
+}

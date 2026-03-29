@@ -1,0 +1,47 @@
+{
+  "task_id": "gin-001",
+  "repo_id": "gin",
+  "repo_url": "https://github.com/gin-gonic/gin",
+  "commit_sha": "0c96a20209ca035964be126a745c167196fb6db3",
+  "language": "go",
+  "task_category": "bug_investigation",
+  "difficulty_level": "easy",
+  "difficulty_score": 0.25,
+  "context_distance_hops": 1,
+  "irreducibility_score": 0.34,
+  "required_context_files": [
+    "render/render.go"
+  ],
+  "changed_files": [
+    "context.go",
+    "render/json.go"
+  ],
+  "constraint_types": ["interface_contract"],
+  "prompt": "When a client disconnects mid-response, Gin panics instead of handling the error gracefully. The panic originates in two places: render.JSON.Render calls panic(err) when the underlying WriteJSON fails (e.g. on a broken pipe), and context.Render also calls panic(err) when any renderer returns an error. These panics propagate uncaught and crash the goroutine. Replace the panic-based error handling with proper error propagation: render methods should return the error, and the context layer should push the error onto the context's error chain and abort the response rather than panicking.",
+  "human_annotation_notes": "render/render.go defines the Render interface: `type Render interface { Render(http.ResponseWriter) error; WriteContentType(w http.ResponseWriter) }`. The interface contract specifies that Render returns an error — the method signature is the constraint. An agent that never reads render/render.go might implement the panic removal in render/json.go but miss that the Render interface guarantees error propagation is the intended pattern, or might implement it inconsistently with the interface contract. The context.Render method signature takes `r render.Render` — understanding the full interface (including WriteContentType) is needed to understand why Abort() is appropriate. render/data.go is noise from the CDM — the Data struct does not constrain the panic-removal fix.",
+  "assert_design": {
+    "retrieval_check": ["render/render.go"],
+    "constraint_symbols": ["Render", "c.Error", "c.Abort", "WriteContentType"],
+    "cpc_description": "Solution must: (1) change render/json.go to return WriteJSON error directly without panicking, (2) change context.Render to use c.Error(err) to push the error, (3) call c.Abort() after the error, (4) not panic in any render code path"
+  },
+  "constraint_propagation_targets": [
+    {
+      "path": "json_render_return",
+      "pattern": "return WriteJSON",
+      "description": "render/json.go Render method must return the error from WriteJSON rather than panicking"
+    },
+    {
+      "path": "context_error_push",
+      "pattern": "c\\.Error\\(err\\)",
+      "description": "context.Render must push the error to the context error chain"
+    },
+    {
+      "path": "abort_response",
+      "pattern": "c\\.Abort\\(\\)",
+      "description": "context.Render must abort the response after a render error"
+    }
+  ],
+  "extraction_method": "semi-automated",
+  "architecture_pattern": "interface_contract",
+  "timeout": 60000
+}

@@ -1,0 +1,402 @@
+{#
+  eval_template.ts.jinja2
+
+  Contracts respected:
+  - readToolLogs() → { toolRequest: { name, args, success, duration_ms } }[]
+  - args is a JSON-encoded STRING — must be JSON.parsed before use
+  - read_file tool uses arg "file_path" (base-declarations.ts:16)
+  - (rig as any).testDir → agent working directory post-run
+  - write_file / create_file / replace_in_file → args also JSON strings
+
+  Validation philosophy:
+  - Retrieval is MANDATORY — task fails if required context not read
+  - CPC checked against ACTUAL written file content, not result text
+  - Constraint symbols checked in written files, not model output
+  - No keyword-matching on result string for pass/fail
+#}
+// =============================================================================
+// {{ task.task_id }}.eval.ts
+// Task     : {{ task.task_category }} | {{ task.difficulty_level }} | {{ task.language }}
+// Repo     : {{ task.repo_id }} @ {{ task.commit_sha }}
+// Required context (not in diff — agent must discover and read):
+{% for f in task.required_context_files %}
+//   {{ f }}
+{% endfor %}
+// =============================================================================
+
+import { evalTest } from '../test-helper.js';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// ── Harness contract helpers ──────────────────────────────────────────────────
+// args in tool logs is a JSON-encoded string per test-rig.ts:1372 / :1391.
+// Callers must never treat it as a plain object.
+
+function parseArgs(raw: unknown): Record<string, unknown> {
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+  if (raw !== null && typeof raw === 'object') {
+    // Defensive: some harness versions may already deserialise
+    return raw as Record<string, unknown>;
+  }
+  return {};
+}
+
+// Normalise a path to a forward-slash, no-leading-slash form for comparison.
+function normPath(p: string): string {
+  return p.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
+}
+
+// True if `candidate` path refers to `target` (handles relative / absolute).
+function pathMatches(candidate: string, target: string): boolean {
+  const c = normPath(candidate);
+  const t = normPath(target);
+  return c === t || c.endsWith('/' + t) || t.endsWith('/' + c);
+}
+
+// Collect every file path the agent attempted to READ across all read tools.
+// Covers: read_file (file_path), read_many_files (paths array),
+// shell cat/head/tail commands.
+function collectReadPaths(logs: any[]): string[] {
+  const paths: string[] = [];
+  for (const log of logs) {
+    const name: string = log.toolRequest?.name ?? '';
+    const args = parseArgs(log.toolRequest?.args);
+
+    if (name === 'read_file') {
+      // Canonical arg is file_path (base-declarations.ts:16).
+      const p = (args['file_path'] ?? args['path'] ?? args['file'] ?? '') as string;
+      if (p) paths.push(p);
+
+    } else if (name === 'read_many_files') {
+      const arr = (args['paths'] ?? args['file_paths'] ?? args['files'] ?? []) as unknown[];
+      for (const p of arr) {
+        if (typeof p === 'string' && p) paths.push(p);
+      }
+
+    } else if (name === 'shell' || name === 'run_shell_command' || name === 'execute_shell') {
+      const cmd = (args['command'] ?? args['cmd'] ?? '') as string;
+      // Match: cat src/foo.py | head src/foo.py | tail ... | less ...
+      for (const m of cmd.matchAll(/\b(?:cat|head|tail|less|more|type)\s+([^\s|><;&'"]+)/g)) {
+        const p = m[1].trim();
+        if (p && !p.startsWith('-')) paths.push(p);
+      }
+    }
+  }
+  return paths;
+}
+
+// Collect content the agent WROTE for a given relative path.
+// Primary: read from testDir (agent's filesystem after run).
+// Fallback: extract from write_file / create_file tool args.
+function getAgentWrittenContent(
+  testDir: string | undefined,
+  logs: any[],
+  relPath: string,
+): string {
+  // Primary: filesystem read
+  if (testDir) {
+    try {
+      return fs.readFileSync(path.join(testDir, relPath), 'utf-8');
+    } catch {
+      // Fall through to tool-log fallback
+    }
+  }
+
+  // Fallback: scan write tool call args
+  for (const log of logs) {
+    const name: string = log.toolRequest?.name ?? '';
+    if (!['write_file', 'create_file', 'overwrite_file'].includes(name)) continue;
+    if (!(log.toolRequest?.success as boolean)) continue;
+
+    const args = parseArgs(log.toolRequest?.args);
+    const fp = (args['file_path'] ?? args['path'] ?? '') as string;
+    if (!fp) continue;
+
+    if (pathMatches(fp, relPath)) {
+      return (args['content'] ?? args['new_content'] ?? args['data'] ?? '') as string;
+    }
+  }
+
+  // Secondary fallback: replace_in_file (patch-based edit)
+  // These don't give us the full new content directly, so we detect that
+  // the file was modified but cannot reconstruct content.
+  for (const log of logs) {
+    const name: string = log.toolRequest?.name ?? '';
+    if (!['replace_in_file', 'edit_file', 'patch_file', 'str_replace_editor'].includes(name)) continue;
+    if (!(log.toolRequest?.success as boolean)) continue;
+
+    const args = parseArgs(log.toolRequest?.args);
+    const fp = (args['file_path'] ?? args['path'] ?? '') as string;
+    if (fp && pathMatches(fp, relPath)) {
+      // File was patched. Return a sentinel that signals modification was detected
+      // but we cannot verify content patterns without testDir access.
+      return '__PATCHED_FILE_CONTENT_UNVERIFIABLE__';
+    }
+  }
+
+  return '';
+}
+
+// ── Task metadata ─────────────────────────────────────────────────────────────
+const TASK_META = {
+  taskId: {{ task.task_id | tojson }},
+  difficultyLevel: {{ task.difficulty_level | tojson }},
+  difficultyScore: {{ task.difficulty_score }},
+  taskCategory: {{ task.task_category | tojson }},
+  language: {{ task.language | tojson }},
+  contextDistanceHops: {{ task.context_distance_hops }},
+  irreducibilityScore: {{ task.irreducibility_score }},
+  requiredContextFiles: {{ task.required_context_files | tojson }},
+  changedFiles: {{ task.changed_files | tojson }},
+  constraintTypes: {{ task.constraint_types | tojson }},
+  repoId: {{ task.repo_id | tojson }},
+  commitSha: {{ task.commit_sha | tojson }},
+} as const;
+
+// ── CPC targets ───────────────────────────────────────────────────────────────
+// IMPORTANT: patterns are matched against ACTUAL FILE CONTENT written by the
+// agent, not against the model's text output.  This makes them hard to game.
+const CPC_TARGETS: ReadonlyArray<{
+  readonly id: string;
+  readonly pattern: RegExp;
+  readonly description: string;
+}> = [
+  {% for target in task.constraint_propagation_targets %}
+  {
+    id: {{ target.path | tojson }},
+    // Pattern: {{ target.description }}
+    pattern: new RegExp({{ target.pattern | tojson }}, 'ms'),
+    description: {{ target.description | tojson }},
+  },
+  {% endfor %}
+] as const;
+
+// Symbols that must appear in the agent's WRITTEN IMPLEMENTATION (not output text).
+const CONSTRAINT_SYMBOLS: ReadonlyArray<string> =
+  {{ task.assert_design.get('constraint_symbols', []) | tojson }};
+
+// ── Eval definition ───────────────────────────────────────────────────────────
+evalTest('USUALLY_PASSES', {
+  name: {{ (task.task_id ~ ' | ' ~ task.task_category ~ ' | ' ~ task.difficulty_level ~ ' | ' ~ task.language) | tojson }},
+
+  prompt: {{ task.prompt | tojson }},
+
+  files: {
+    {% for filepath, content in task.files.items() %}
+    {{ filepath | tojson }}: {{ content | tojson }},
+    {% endfor %}
+  },
+
+  approvalMode: 'yolo',
+  timeout: {{ task.timeout | default(90000) }},
+
+  assert: async (rig, result) => {
+    const assertStart = Date.now();
+    const toolLogs: any[] = rig.readToolLogs();
+
+    // ── Stage 1: Retrieval ────────────────────────────────────────────────────
+    // MANDATORY GATE: task cannot pass if required context was not read.
+    // We collect paths from all read tools (not just read_file) and use
+    // normalised path comparison (not basename substring) to avoid false positives.
+
+    const readPaths = collectReadPaths(toolLogs);
+    const requiredFiles: string[] = [...TASK_META.requiredContextFiles];
+
+    const retrievalResults = requiredFiles.map(rf => {
+      const retrieved = readPaths.some(rp => pathMatches(rp, rf));
+      return {
+        file: rf,
+        retrieved,
+        readCount: readPaths.filter(rp => pathMatches(rp, rf)).length,
+      };
+    });
+
+    const retrievalSuccess = retrievalResults.every(r => r.retrieved);
+    const retrievalRate = requiredFiles.length === 0
+      ? 1
+      : retrievalResults.filter(r => r.retrieved).length / requiredFiles.length;
+
+    // ── Stage 2: Read what the agent actually wrote ───────────────────────────
+    // Access agent's working directory (testDir) — internal TestRig property.
+    // Falls back to write_file tool arg content if testDir is unavailable.
+
+    const testDir = (rig as any).testDir as string | undefined;
+    const changedFiles: string[] = [...TASK_META.changedFiles];
+
+    // Map: relative path → content written by agent
+    const agentWritten = new Map<string, string>();
+    for (const cf of changedFiles) {
+      const content = getAgentWrittenContent(testDir, toolLogs, cf);
+      if (content) agentWritten.set(cf, content);
+    }
+
+    const agentModifiedAny = agentWritten.size > 0;
+    const contentUnverifiable = [...agentWritten.values()].some(
+      v => v === '__PATCHED_FILE_CONTENT_UNVERIFIABLE__',
+    );
+
+    // ── Stage 3: CPC — patterns in actual implementation ─────────────────────
+    // Each target is checked against the concatenated content of all files the
+    // agent modified.  If agent used patch tools (replace_in_file), content is
+    // unverifiable from tool args alone but testDir access still works.
+    const allWritten = [...agentWritten.values()]
+      .filter(v => v !== '__PATCHED_FILE_CONTENT_UNVERIFIABLE__')
+      .join('\n\n');
+
+    const cpcResults = CPC_TARGETS.map(t => {
+      if (contentUnverifiable && !testDir) {
+        // Cannot verify — mark as inconclusive (not failed)
+        return { id: t.id, description: t.description, satisfied: null as unknown as boolean, inconclusive: true };
+      }
+      return {
+        id: t.id,
+        description: t.description,
+        satisfied: allWritten.length > 0 && t.pattern.test(allWritten),
+        inconclusive: false,
+      };
+    });
+
+    const conclusiveCpc = cpcResults.filter(r => !r.inconclusive);
+    const cpcScore = conclusiveCpc.length === 0
+      ? (contentUnverifiable ? 0.5 : 1.0)  // unknown → neutral; no targets → perfect
+      : conclusiveCpc.filter(r => r.satisfied).length / conclusiveCpc.length;
+
+    // ── Stage 4: Constraint symbol validation ────────────────────────────────
+    // Symbols are checked in WRITTEN CODE, not model output text.
+    const symbolResults = CONSTRAINT_SYMBOLS.map(s => ({
+      symbol: s,
+      found: !contentUnverifiable && allWritten.includes(s),
+      inconclusive: contentUnverifiable && !testDir,
+    }));
+
+    const symbolsPass = CONSTRAINT_SYMBOLS.length === 0
+      || (contentUnverifiable && !testDir)   // inconclusive — don't fail on this alone
+      || symbolResults.every(r => r.found || r.inconclusive);
+
+    // ── Stage 5: DTA — Dependency Traversal Accuracy ────────────────────────
+    // Measures: did agent traverse to correct deps (retrieval) AND apply
+    // insights from them (evidenced by correct symbol usage in code)?
+    const hops = TASK_META.contextDistanceHops;
+    const dtaScore = retrievalResults.reduce((acc, r, i) => {
+      const mu = r.retrieved ? 1 : 0;
+      const gamma = r.retrieved && symbolsPass && agentModifiedAny ? 1 : 0;
+      const delta = Math.max(1, hops - i);
+      return acc + (mu * gamma) / (delta + 1);
+    }, 0) / Math.max(1, requiredFiles.length);
+
+    // ── Stage 6: ICU — Information Coverage Utilization ─────────────────────
+    const uniqueReads = new Set(readPaths.map(normPath)).size;
+    const redundancy = Math.max(0, readPaths.length - uniqueReads);
+    const icuScore = retrievalRate * (1 / (1 + redundancy * 0.1));
+
+    // ── Stage 7: Failure mode classification ─────────────────────────────────
+    // Classified for ALL runs (not just failures) so loops surface even on pass.
+    let failureMode: string;
+
+    const isLooping = readPaths.length > 4
+      && new Set(readPaths.map(normPath)).size < readPaths.length * 0.4;
+
+    if (!retrievalSuccess) {
+      // Never accessed the files needed to understand the problem
+      failureMode = 'context_substitution';
+    } else if (!agentModifiedAny) {
+      // Read context but made no file changes
+      failureMode = 'false_end';
+    } else if (!symbolsPass && !contentUnverifiable) {
+      // Got context, made changes, but implementation is wrong
+      failureMode = 'retrieval_success_task_failure';
+    } else if (isLooping) {
+      failureMode = 'loops';
+    } else if (toolLogs.length > 40 && !agentModifiedAny) {
+      failureMode = 'inefficient_progress';
+    } else {
+      failureMode = 'success';
+    }
+
+    // Overall task success
+    const taskSuccess = retrievalSuccess && agentModifiedAny && symbolsPass;
+
+    // ── Stage 8: Structured JSONL logging ────────────────────────────────────
+    const logEntry = {
+      ...TASK_META,
+      timestamp: new Date().toISOString(),
+      assertDurationMs: Date.now() - assertStart,
+      // Retrieval signals
+      retrievalSuccess,
+      retrievalRate,
+      retrievalResults,
+      // Implementation signals
+      agentModifiedFiles: [...agentWritten.keys()],
+      agentModifiedAny,
+      contentVerifiable: !contentUnverifiable,
+      // Metrics
+      taskSuccess,
+      cpcScore,
+      cpcResults,
+      dtaScore,
+      icuScore,
+      failureMode,
+      symbolResults,
+      // Tool usage
+      toolCallCount: toolLogs.length,
+      totalReadPaths: readPaths.length,
+      uniqueReadPaths: new Set(readPaths.map(normPath)).size,
+      resultLength: result.length,
+    };
+
+    const logPath = process.env['LC_BENCH_LOG'];
+    if (logPath) {
+      try {
+        fs.mkdirSync(path.dirname(logPath), { recursive: true });
+        fs.appendFileSync(logPath, JSON.stringify(logEntry) + '\n');
+      } catch (e) {
+        // Non-fatal — log to stderr so we don't lose results silently
+        process.stderr.write(`[LC_BENCH] Log write failed: ${String(e)}\n`);
+      }
+    } else {
+      console.log('\nEVAL_RESULT:', JSON.stringify(logEntry, null, 2));
+    }
+
+    // ── Stage 9: Assertion ────────────────────────────────────────────────────
+    // Gate 1 (hard): required context must have been read.
+    if (!retrievalSuccess) {
+      const missing = retrievalResults.filter(r => !r.retrieved).map(r => r.file).join(', ');
+      const seen = [...new Set(readPaths.map(normPath))].slice(0, 10).join(', ');
+      throw new Error(
+        `[${TASK_META.taskId}] FAILED — required context not retrieved.\n` +
+        `  Missing : ${missing}\n` +
+        `  Seen    : ${seen || '(nothing read)'}\n` +
+        `  Failure : ${failureMode}`,
+      );
+    }
+
+    // Gate 2 (hard): agent must have actually modified at least one file.
+    if (!agentModifiedAny) {
+      throw new Error(
+        `[${TASK_META.taskId}] FAILED — no changed files were written.\n` +
+        `  Expected edits in: ${changedFiles.join(', ')}\n` +
+        `  Tool calls        : ${toolLogs.length}\n` +
+        `  Failure           : ${failureMode}`,
+      );
+    }
+
+    // Gate 3 (soft when content is unverifiable via patch tools):
+    // constraint symbols must appear in the written implementation.
+    if (!symbolsPass && !contentUnverifiable) {
+      const missing = symbolResults.filter(r => !r.found).map(r => r.symbol).join(', ');
+      throw new Error(
+        `[${TASK_META.taskId}] FAILED — required symbols absent from implementation.\n` +
+        `  Missing symbols: ${missing}\n` +
+        `  CPC            : ${cpcScore.toFixed(2)} (${conclusiveCpc.filter(r => r.satisfied).length}/${conclusiveCpc.length} targets)\n` +
+        `  Modified files : ${[...agentWritten.keys()].join(', ')}\n` +
+        `  Failure        : ${failureMode}`,
+      );
+    }
+  },
+});

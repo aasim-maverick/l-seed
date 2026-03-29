@@ -1,0 +1,58 @@
+{
+  "task_id": "gin-003",
+  "repo_id": "gin",
+  "repo_url": "https://github.com/gin-gonic/gin",
+  "commit_sha": "3fe928994b7ba7ed16b0c5114ca82a9dafa7a974",
+  "language": "go",
+  "task_category": "bug_investigation",
+  "difficulty_level": "hard",
+  "difficulty_score": 0.72,
+  "context_distance_hops": 1,
+  "irreducibility_score": 0.43,
+  "required_context_files": [
+    "internal/bytesconv/bytesconv_1.20.go"
+  ],
+  "changed_files": [
+    "context.go",
+    "gin.go",
+    "tree.go"
+  ],
+  "constraint_types": ["algorithm", "memory_layout"],
+  "prompt": "Gin's radix tree router incorrectly handles URL matching when multiple routes share wildcard segments at the same nesting level. For example, registering both /c1/:dd/e and /:cc/:dd/ee causes routing failures: requests to /c1/d/ee should match /:cc/:dd/ee but instead fail to match or match incorrectly. The root cause is in tree.go's getValue method, which uses a single latestNode variable to remember where to backtrack during wildcard matching. When the tree needs to backtrack through multiple candidate wildcard nodes, only the most recent one is remembered and earlier candidates are lost. Replace the single latestNode backtracking pointer with a stack of skipped nodes that records each candidate wildcard node encountered during traversal, along with the path and parameter count at that point. Update Context to carry this stack and Engine to allocate it. Also add a countSections helper that counts path separators to track the maximum section depth across all registered routes.",
+  "human_annotation_notes": "internal/bytesconv/bytesconv_1.20.go (and _1.19.go) defines StringToBytes, a zero-copy string-to-bytes conversion used in the new countSections function: `s := bytesconv.StringToBytes(path); return uint16(bytes.Count(s, strSlash))`. An agent unfamiliar with this package will use []byte(path) (which allocates) or miss the pattern entirely. The CDM output (render/text.go, render/html.go) is noise with no relevance. The core algorithmic challenge is understanding how the single-pointer backtracking fails for multi-level wildcards and designing the stack semantics correctly: each skippedNode must store the path at that point and the current parameter count so backtracking can restore both. The paramsCount field in skippedNode is easy to miss but necessary to avoid incorrect parameter assignments after backtracking.",
+  "assert_design": {
+    "retrieval_check": ["internal/bytesconv/bytesconv_1.20.go"],
+    "constraint_symbols": ["skippedNode", "skippedNodes", "countSections", "StringToBytes", "maxSections"],
+    "cpc_description": "Solution must: (1) define a skippedNode struct with at minimum path string, node pointer, and parameter count fields, (2) add skippedNodes *[]skippedNode to Context struct, (3) add countSections function using bytesconv.StringToBytes, (4) add maxSections uint16 to Engine and initialize skippedNodes in allocateContext using maxSections, (5) replace single latestNode backtracking in getValue with stack push/pop using skippedNodes, (6) update getValue signature to accept skippedNodes parameter"
+  },
+  "constraint_propagation_targets": [
+    {
+      "path": "skipped_node_struct",
+      "pattern": "skippedNode\\s+struct",
+      "description": "Must define skippedNode struct to hold backtracking state"
+    },
+    {
+      "path": "count_sections",
+      "pattern": "countSections",
+      "description": "Must add countSections function to track maximum path depth"
+    },
+    {
+      "path": "bytesconv_usage",
+      "pattern": "StringToBytes|bytesconv",
+      "description": "countSections must use the zero-copy bytesconv.StringToBytes conversion"
+    },
+    {
+      "path": "stack_backtracking",
+      "pattern": "skippedNodes",
+      "description": "getValue must use the skippedNodes stack instead of a single latestNode pointer"
+    },
+    {
+      "path": "params_count_preservation",
+      "pattern": "paramsCount|globalParamsCount",
+      "description": "skippedNode must record parameter count to correctly restore params on backtrack"
+    }
+  ],
+  "extraction_method": "semi-automated",
+  "architecture_pattern": "tree_algorithm",
+  "timeout": 120000
+}
