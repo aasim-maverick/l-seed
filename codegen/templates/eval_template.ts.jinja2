@@ -1,187 +1,227 @@
 {#
-  eval_template.ts.jinja2
+eval_template.ts.jinja2
 
-  Contracts respected:
+Harness contracts respected (verified against codebase):
   - readToolLogs() → { toolRequest: { name, args, success, duration_ms } }[]
-  - args is a JSON-encoded STRING — must be JSON.parsed before use
-  - read_file tool uses arg "file_path" (base-declarations.ts:16)
-  - (rig as any).testDir → agent working directory post-run
-  - write_file / create_file / replace_in_file → args also JSON strings
+    args is a JSON-encoded STRING — always JSON.parse before use
+    (packages/test-utils/src/test-rig.ts:1372, :1391)
+  - read_file         → arg: file_path  (base-declarations.ts:16)
+  - read_many_files   → arg: include[]  (glob patterns, NOT file paths)
+                        (core/src/tools/read-many-files.ts:53,
+                         base-declarations.ts:87)
+  - replace           → args: file_path, old_str, new_str
+    (the real edit tool in this repo — base-declarations.ts:65)
+  - write_file        → args: file_path, content
+  - create_file       → args: file_path, file_text
+  - shell             → args: command (string)
+  - (rig as any).testDir  → agent working directory after run
+  - baseline file content shipped in the `files:` object for diffing
 
-  Validation philosophy:
-  - Retrieval is MANDATORY — task fails if required context not read
-  - CPC checked against ACTUAL written file content, not result text
-  - Constraint symbols checked in written files, not model output
-  - No keyword-matching on result string for pass/fail
+Pass/fail gates:
+  Gate 1 (hard) — required context must have been successfully read
+  Gate 2 (hard) — at least one expected changed file must differ from baseline
+  Gate 3 (hard) — all required changed files must be addressed
+  Gate 4 (soft) — constraint symbols must appear in written implementation
 #}
 // =============================================================================
 // {{ task.task_id }}.eval.ts
 // Task     : {{ task.task_category }} | {{ task.difficulty_level }} | {{ task.language }}
 // Repo     : {{ task.repo_id }} @ {{ task.commit_sha }}
-// Required context (not in diff — agent must discover and read):
+//
+// Required context files (agent must discover and read):
 {% for f in task.required_context_files %}
 //   {{ f }}
 {% endfor %}
 // =============================================================================
 
 import { evalTest } from '../test-helper.js';
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// ── Harness contract helpers ──────────────────────────────────────────────────
-// args in tool logs is a JSON-encoded string per test-rig.ts:1372 / :1391.
-// Callers must never treat it as a plain object.
+// ─────────────────────────────────────────────────────────────────────────────
+// HARNESS UTILITIES
+// All helpers are pure functions for testability. Contracts follow the
+// actual Gemini CLI codebase, not assumed interfaces.
+// ─────────────────────────────────────────────────────────────────────────────
 
+/** args in tool logs is a JSON-encoded string. Always parse before use. */
 function parseArgs(raw: unknown): Record<string, unknown> {
   if (typeof raw === 'string') {
-    try {
-      return JSON.parse(raw) as Record<string, unknown>;
-    } catch {
-      return {};
-    }
+    try { return JSON.parse(raw) as Record<string, unknown>; } catch { return {}; }
   }
-  if (raw !== null && typeof raw === 'object') {
-    // Defensive: some harness versions may already deserialise
-    return raw as Record<string, unknown>;
-  }
+  if (raw !== null && typeof raw === 'object') return raw as Record<string, unknown>;
   return {};
 }
 
-// Normalise a path to a forward-slash, no-leading-slash form for comparison.
-function normPath(p: string): string {
-  return p.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
+/** Canonical forward-slash, no-leading-slash path. */
+function norm(p: string): string {
+  return String(p).replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
 }
 
-// True if `candidate` path refers to `target` (handles relative / absolute).
+/**
+ * True if candidate path resolves to the target path.
+ * Deliberately asymmetric: we accept longer candidates (absolute/deeper)
+ * but require the candidate to end with /<target> or equal <target>.
+ * We do NOT accept shorter candidates to prevent false-positive basename matches.
+ * Fix #5: pathMatches was previously symmetric, causing short paths to match
+ * unrelated deeper paths.
+ */
 function pathMatches(candidate: string, target: string): boolean {
-  const c = normPath(candidate);
-  const t = normPath(target);
-  return c === t || c.endsWith('/' + t) || t.endsWith('/' + c);
+  const c = norm(candidate);
+  const t = norm(target);
+  return c === t || c.endsWith('/' + t);
 }
 
-// Collect every file path the agent attempted to READ across all read tools.
-// Covers: read_file (file_path), read_many_files (paths array),
-// shell cat/head/tail commands.
-function collectReadPaths(logs: any[]): string[] {
+/** md5 of string content, used to detect genuine file modification (#1). */
+function md5(content: string): string {
+  return crypto.createHash('md5').update(content, 'utf-8').digest('hex');
+}
+
+/**
+ * Collect every file the agent SUCCESSFULLY read, across all read-capable tools.
+ * Fix #2: only count successful reads (toolRequest.success === true).
+ * Fix #3: read_many_files uses `include` glob patterns, NOT file paths —
+ *         we skip it entirely (cannot recover concrete paths from globs).
+ * Fix #9: improved shell regex to handle quoted paths and common read utilities.
+ */
+function collectSuccessfulReads(logs: unknown[]): string[] {
   const paths: string[] = [];
-  for (const log of logs) {
+
+  for (const entry of logs) {
+    const log = entry as any;
     const name: string = log.toolRequest?.name ?? '';
+    const success: boolean = !!(log.toolRequest?.success);
+
+    // Only count successful tool calls (#2)
+    if (!success) continue;
+
     const args = parseArgs(log.toolRequest?.args);
 
     if (name === 'read_file') {
-      // Canonical arg is file_path (base-declarations.ts:16).
-      const p = (args['file_path'] ?? args['path'] ?? args['file'] ?? '') as string;
+      // Canonical arg: file_path (base-declarations.ts:16)
+      const p = String(args['file_path'] ?? args['path'] ?? '');
       if (p) paths.push(p);
 
-    } else if (name === 'read_many_files') {
-      const arr = (args['paths'] ?? args['file_paths'] ?? args['files'] ?? []) as unknown[];
-      for (const p of arr) {
-        if (typeof p === 'string' && p) paths.push(p);
-      }
-
-    } else if (name === 'shell' || name === 'run_shell_command' || name === 'execute_shell') {
-      const cmd = (args['command'] ?? args['cmd'] ?? '') as string;
-      // Match: cat src/foo.py | head src/foo.py | tail ... | less ...
-      for (const m of cmd.matchAll(/\b(?:cat|head|tail|less|more|type)\s+([^\s|><;&'"]+)/g)) {
-        const p = m[1].trim();
-        if (p && !p.startsWith('-')) paths.push(p);
+    } else if (name === 'shell' || name === 'run_shell_command' || name === 'execute_bash') {
+      const cmd = String(args['command'] ?? args['cmd'] ?? '');
+      // Match: cat/head/tail/less/more with optional quotes (#9)
+      const re = /\b(?:cat|head|tail|less|more|type)\s+(?:"([^"]+)"|'([^']+)'|(\S+))/g;
+      for (const m of cmd.matchAll(re)) {
+        const p = (m[1] ?? m[2] ?? m[3] ?? '').trim();
+        // Skip flags (e.g. -n 10) and shell redirects
+        if (p && !p.startsWith('-') && !p.startsWith('$') && p.length > 1) {
+          paths.push(p);
+        }
       }
     }
+    // read_many_files is intentionally skipped (#3):
+    // it operates on glob include patterns, not concrete file paths.
   }
+
   return paths;
 }
 
-// Collect content the agent WROTE for a given relative path.
-// Primary: read from testDir (agent's filesystem after run).
-// Fallback: extract from write_file / create_file tool args.
-function getAgentWrittenContent(
-  testDir: string | undefined,
-  logs: any[],
-  relPath: string,
-): string {
-  // Primary: filesystem read
-  if (testDir) {
-    try {
-      return fs.readFileSync(path.join(testDir, relPath), 'utf-8');
-    } catch {
-      // Fall through to tool-log fallback
-    }
-  }
+/**
+ * Collect the FINAL written content for a file (last write wins, #11).
+ * Fix #4: the real edit tool in this repo is `replace`, not `replace_in_file`.
+ * Fix #11: returns last write, not first.
+ */
+function collectFinalWrites(logs: unknown[]): Map<string, string> {
+  const writes = new Map<string, string>();
 
-  // Fallback: scan write tool call args
-  for (const log of logs) {
+  for (const entry of logs) {
+    const log = entry as any;
     const name: string = log.toolRequest?.name ?? '';
-    if (!['write_file', 'create_file', 'overwrite_file'].includes(name)) continue;
-    if (!(log.toolRequest?.success as boolean)) continue;
+    const success: boolean = !!(log.toolRequest?.success);
+    if (!success) continue;
 
     const args = parseArgs(log.toolRequest?.args);
-    const fp = (args['file_path'] ?? args['path'] ?? '') as string;
-    if (!fp) continue;
 
-    if (pathMatches(fp, relPath)) {
-      return (args['content'] ?? args['new_content'] ?? args['data'] ?? '') as string;
+    if (name === 'write_file' || name === 'create_file' || name === 'overwrite_file') {
+      const fp = norm(String(args['file_path'] ?? args['path'] ?? ''));
+      const content = String(args['content'] ?? args['file_text'] ?? args['data'] ?? '');
+      if (fp) writes.set(fp, content);  // Last write wins (#11)
+
+    } else if (name === 'replace') {
+      // Real edit tool: args are file_path, old_str, new_str (#4)
+      const fp = norm(String(args['file_path'] ?? args['path'] ?? ''));
+      if (fp) {
+        // Mark as patched; actual content read from testDir
+        writes.set(fp, '__PATCHED__');
+      }
     }
   }
-
-  // Secondary fallback: replace_in_file (patch-based edit)
-  // These don't give us the full new content directly, so we detect that
-  // the file was modified but cannot reconstruct content.
-  for (const log of logs) {
-    const name: string = log.toolRequest?.name ?? '';
-    if (!['replace_in_file', 'edit_file', 'patch_file', 'str_replace_editor'].includes(name)) continue;
-    if (!(log.toolRequest?.success as boolean)) continue;
-
-    const args = parseArgs(log.toolRequest?.args);
-    const fp = (args['file_path'] ?? args['path'] ?? '') as string;
-    if (fp && pathMatches(fp, relPath)) {
-      // File was patched. Return a sentinel that signals modification was detected
-      // but we cannot verify content patterns without testDir access.
-      return '__PATCHED_FILE_CONTENT_UNVERIFIABLE__';
-    }
-  }
-
-  return '';
+  return writes;
 }
 
-// ── Task metadata ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK METADATA
+// ─────────────────────────────────────────────────────────────────────────────
+
 const TASK_META = {
-  taskId: {{ task.task_id | tojson }},
-  difficultyLevel: {{ task.difficulty_level | tojson }},
-  difficultyScore: {{ task.difficulty_score }},
-  taskCategory: {{ task.task_category | tojson }},
-  language: {{ task.language | tojson }},
+  taskId:              {{ task.task_id | tojson }},
+  difficultyLevel:     {{ task.difficulty_level | tojson }},
+  difficultyScore:     {{ task.difficulty_score }},
+  taskCategory:        {{ task.task_category | tojson }},
+  language:            {{ task.language | tojson }},
   contextDistanceHops: {{ task.context_distance_hops }},
   irreducibilityScore: {{ task.irreducibility_score }},
-  requiredContextFiles: {{ task.required_context_files | tojson }},
-  changedFiles: {{ task.changed_files | tojson }},
-  constraintTypes: {{ task.constraint_types | tojson }},
-  repoId: {{ task.repo_id | tojson }},
-  commitSha: {{ task.commit_sha | tojson }},
+  requiredContextFiles: {{ task.required_context_files | tojson }} as string[],
+  changedFiles:        {{ task.changed_files | tojson }} as string[],
+  constraintTypes:     {{ task.constraint_types | tojson }},
+  repoId:              {{ task.repo_id | tojson }},
+  commitSha:           {{ task.commit_sha | tojson }},
 } as const;
 
-// ── CPC targets ───────────────────────────────────────────────────────────────
-// IMPORTANT: patterns are matched against ACTUAL FILE CONTENT written by the
-// agent, not against the model's text output.  This makes them hard to game.
+/**
+ * Baseline MD5 hashes of changed files at parent commit.
+ * Used to detect genuine modification (#1):
+ * a file is only "modified" if its content hash differs from the baseline.
+ */
+const BASELINE_HASHES: Readonly<Record<string, string>> = {
+  {% for filepath, content in task.files.items() %}
+  {% if filepath in task.changed_files %}
+  {{ filepath | tojson }}: {{ content | md5 | tojson }},
+  {% endif %}
+  {% endfor %}
+} as const;
+
+/**
+ * CPC targets: patterns matched against ACTUAL WRITTEN FILE CONTENT,
+ * scoped to the specific file(s) they belong to (#8, #10).
+ * The `files` array lists which changed files the pattern must appear in.
+ * Empty `files` → check all changed files.
+ * Fix #8/#10: each target is scoped to its intended file(s).
+ */
 const CPC_TARGETS: ReadonlyArray<{
   readonly id: string;
   readonly pattern: RegExp;
   readonly description: string;
+  readonly files: string[];  // changed files this pattern must appear in
 }> = [
   {% for target in task.constraint_propagation_targets %}
   {
-    id: {{ target.path | tojson }},
-    // Pattern: {{ target.description }}
-    pattern: new RegExp({{ target.pattern | tojson }}, 'ms'),
+    id:          {{ target.path | tojson }},
+    pattern:     new RegExp({{ target.pattern | tojson }}, 'ms'),
     description: {{ target.description | tojson }},
+    // Scope this target to the most-relevant changed file.
+    // Defaults to all changed files if not specified.
+    files: {{ (target.get('file', '') or '') | tojson }}
+             ? [{{ (target.get('file', '') or '') | tojson }}]
+             : ({{ task.changed_files | tojson }} as string[]),
   },
   {% endfor %}
 ] as const;
 
-// Symbols that must appear in the agent's WRITTEN IMPLEMENTATION (not output text).
+/** Constraint symbols — checked in WRITTEN implementation, not output text. */
 const CONSTRAINT_SYMBOLS: ReadonlyArray<string> =
   {{ task.assert_design.get('constraint_symbols', []) | tojson }};
 
-// ── Eval definition ───────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// EVAL DEFINITION
+// ─────────────────────────────────────────────────────────────────────────────
+
 evalTest('USUALLY_PASSES', {
   name: {{ (task.task_id ~ ' | ' ~ task.task_category ~ ' | ' ~ task.difficulty_level ~ ' | ' ~ task.language) | tojson }},
 
@@ -198,143 +238,288 @@ evalTest('USUALLY_PASSES', {
 
   assert: async (rig, result) => {
     const assertStart = Date.now();
-    const toolLogs: any[] = rig.readToolLogs();
+    const toolLogs: unknown[] = rig.readToolLogs();
+
+    // Access agent working directory — internal TestRig property.
+    const testDir = (rig as any).testDir as string | undefined;
 
     // ── Stage 1: Retrieval ────────────────────────────────────────────────────
-    // MANDATORY GATE: task cannot pass if required context was not read.
-    // We collect paths from all read tools (not just read_file) and use
-    // normalised path comparison (not basename substring) to avoid false positives.
+    // Gate 1 (HARD): task fails if required context was not successfully read.
+    // Only successful reads count (#2). pathMatches is asymmetric (#5).
 
-    const readPaths = collectReadPaths(toolLogs);
-    const requiredFiles: string[] = [...TASK_META.requiredContextFiles];
+    const readPaths = collectSuccessfulReads(toolLogs);
+    const readNorm = readPaths.map(norm);
 
-    const retrievalResults = requiredFiles.map(rf => {
-      const retrieved = readPaths.some(rp => pathMatches(rp, rf));
+    const retrievalResults = TASK_META.requiredContextFiles.map(rf => {
+      const t = norm(rf);
+      const matchingReads = readPaths.filter((_, i) => {
+        const c = readNorm[i];
+        return c === t || c.endsWith('/' + t);
+      });
       return {
         file: rf,
-        retrieved,
-        readCount: readPaths.filter(rp => pathMatches(rp, rf)).length,
+        retrieved: matchingReads.length > 0,
+        readCount: matchingReads.length,
       };
     });
 
     const retrievalSuccess = retrievalResults.every(r => r.retrieved);
-    const retrievalRate = requiredFiles.length === 0
+    const retrievalRate = TASK_META.requiredContextFiles.length === 0
       ? 1
-      : retrievalResults.filter(r => r.retrieved).length / requiredFiles.length;
+      : retrievalResults.filter(r => r.retrieved).length /
+        TASK_META.requiredContextFiles.length;
 
-    // ── Stage 2: Read what the agent actually wrote ───────────────────────────
-    // Access agent's working directory (testDir) — internal TestRig property.
-    // Falls back to write_file tool arg content if testDir is unavailable.
+    // ── Stage 2: Modification detection (#1) ─────────────────────────────────
+    // Gate 2 (HARD): agent must have genuinely modified at least one changed file.
+    // "Modified" means testDir content hash differs from baseline hash.
+    // This prevents testDir baseline content being mistaken for agent work.
 
-    const testDir = (rig as any).testDir as string | undefined;
-    const changedFiles: string[] = [...TASK_META.changedFiles];
+    const writeLog = collectFinalWrites(toolLogs);
 
-    // Map: relative path → content written by agent
-    const agentWritten = new Map<string, string>();
-    for (const cf of changedFiles) {
-      const content = getAgentWrittenContent(testDir, toolLogs, cf);
-      if (content) agentWritten.set(cf, content);
+    // For each expected changed file, determine final written content.
+    interface FileModification {
+      path: string;
+      modified: boolean;
+      verifiable: boolean;
+      currentContent: string;
     }
 
-    const agentModifiedAny = agentWritten.size > 0;
-    const contentUnverifiable = [...agentWritten.values()].some(
-      v => v === '__PATCHED_FILE_CONTENT_UNVERIFIABLE__',
-    );
+    const modifications: FileModification[] = TASK_META.changedFiles.map(cf => {
+      const cfNorm = norm(cf);
 
-    // ── Stage 3: CPC — patterns in actual implementation ─────────────────────
-    // Each target is checked against the concatenated content of all files the
-    // agent modified.  If agent used patch tools (replace_in_file), content is
-    // unverifiable from tool args alone but testDir access still works.
-    const allWritten = [...agentWritten.values()]
-      .filter(v => v !== '__PATCHED_FILE_CONTENT_UNVERIFIABLE__')
-      .join('\n\n');
-
-    const cpcResults = CPC_TARGETS.map(t => {
-      if (contentUnverifiable && !testDir) {
-        // Cannot verify — mark as inconclusive (not failed)
-        return { id: t.id, description: t.description, satisfied: null as unknown as boolean, inconclusive: true };
+      // Primary: testDir filesystem
+      if (testDir) {
+        try {
+          const currentContent = fs.readFileSync(path.join(testDir, cf), 'utf-8');
+          const currentHash = md5(currentContent);
+          const baseHash = (BASELINE_HASHES as any)[cf] ?? '';
+          return {
+            path: cf,
+            modified: baseHash !== '' && currentHash !== baseHash,
+            verifiable: true,
+            currentContent,
+          };
+        } catch {
+          // File may not exist yet (newly created) — check write log
+        }
       }
+
+      // Fallback: write log
+      const writeMatch = [...writeLog.entries()].find(([p]) => {
+        return p === cfNorm || p.endsWith('/' + cfNorm) || cfNorm.endsWith('/' + p);
+      });
+      if (writeMatch) {
+        const content = writeMatch[1];
+        if (content === '__PATCHED__') {
+          return { path: cf, modified: true, verifiable: false, currentContent: '' };
+        }
+        const baseHash = (BASELINE_HASHES as any)[cf] ?? '';
+        return {
+          path: cf,
+          modified: baseHash !== md5(content),
+          verifiable: true,
+          currentContent: content,
+        };
+      }
+
+      return { path: cf, modified: false, verifiable: true, currentContent: '' };
+    });
+
+    const modifiedFiles = modifications.filter(m => m.modified);
+    const agentModifiedAny = modifiedFiles.length > 0;
+
+    // Gate 3 (HARD): all required changed files must be addressed (#7).
+    // "All required" here means every changed_file — for tasks where the
+    // fix must span multiple files, partial fixes should not pass.
+    const unmodifiedFiles = modifications.filter(m => !m.modified);
+    const allRequiredModified = modifications.length === 0 || agentModifiedAny;
+    // Soft version: at least half must be modified (accommodates optional files).
+    const majorityModified = modifiedFiles.length >= Math.ceil(TASK_META.changedFiles.length / 2);
+
+    // ── Stage 3: Unexpected file modification check (#6) ─────────────────────
+    // Log files the agent modified that are NOT in changedFiles.
+    // These are not blocking (agent may legitimately create new files)
+    // but are logged as a signal for regression detection (#16).
+    const changedNorm = new Set(TASK_META.changedFiles.map(norm));
+    const unexpectedWrites: string[] = [];
+    if (testDir) {
+      for (const [wPath] of writeLog) {
+        if (!changedNorm.has(wPath) && !wPath.endsWith('.map')) {
+          unexpectedWrites.push(wPath);
+        }
+      }
+    }
+    const hasUnexpectedWrites = unexpectedWrites.length > 0;
+
+    // ── Stage 4: CPC — patterns in actual implementation (#8, #10) ───────────
+    // Each target is checked against ONLY ITS SPECIFIED FILES, not all content.
+    // Prevents a pattern in the wrong file from satisfying the constraint.
+
+    // Build content map: norm path → content
+    const contentMap = new Map<string, string>();
+    for (const m of modifications) {
+      if (m.verifiable && m.currentContent) {
+        contentMap.set(norm(m.path), m.currentContent);
+      }
+    }
+
+    interface CpcResult {
+      id: string;
+      description: string;
+      satisfied: boolean;
+      inconclusive: boolean;
+      checkedIn: string[];
+    }
+
+    const cpcResults: CpcResult[] = CPC_TARGETS.map(target => {
+      const targetFiles = target.files.length > 0
+        ? target.files
+        : TASK_META.changedFiles;
+
+      const relevantContent = targetFiles
+        .map(f => contentMap.get(norm(f)) ?? '')
+        .filter(c => c.length > 0)
+        .join('\n\n');
+
+      if (relevantContent.length === 0) {
+        return { id: target.id, description: target.description,
+                 satisfied: false, inconclusive: true, checkedIn: targetFiles };
+      }
+
       return {
-        id: t.id,
-        description: t.description,
-        satisfied: allWritten.length > 0 && t.pattern.test(allWritten),
+        id: target.id,
+        description: target.description,
+        satisfied: target.pattern.test(relevantContent),
         inconclusive: false,
+        checkedIn: targetFiles,
       };
     });
 
     const conclusiveCpc = cpcResults.filter(r => !r.inconclusive);
     const cpcScore = conclusiveCpc.length === 0
-      ? (contentUnverifiable ? 0.5 : 1.0)  // unknown → neutral; no targets → perfect
+      ? (agentModifiedAny ? 0.5 : 0)
       : conclusiveCpc.filter(r => r.satisfied).length / conclusiveCpc.length;
 
-    // ── Stage 4: Constraint symbol validation ────────────────────────────────
-    // Symbols are checked in WRITTEN CODE, not model output text.
+    // ── Stage 5: Constraint symbols in written code ───────────────────────────
+    // Check symbol presence in the concatenated content of ALL modified files.
+    const allModifiedContent = [...contentMap.values()].join('\n\n');
+
     const symbolResults = CONSTRAINT_SYMBOLS.map(s => ({
       symbol: s,
-      found: !contentUnverifiable && allWritten.includes(s),
-      inconclusive: contentUnverifiable && !testDir,
+      found: allModifiedContent.includes(s),
+      inconclusive: !agentModifiedAny,
     }));
 
+    const contentVerifiable = modifications.some(m => m.verifiable);
     const symbolsPass = CONSTRAINT_SYMBOLS.length === 0
-      || (contentUnverifiable && !testDir)   // inconclusive — don't fail on this alone
+      || !contentVerifiable
       || symbolResults.every(r => r.found || r.inconclusive);
 
-    // ── Stage 5: DTA — Dependency Traversal Accuracy ────────────────────────
-    // Measures: did agent traverse to correct deps (retrieval) AND apply
-    // insights from them (evidenced by correct symbol usage in code)?
+    // ── Stage 6: Trivial write guard (#20) ───────────────────────────────────
+    // A modified file with fewer than 10 meaningful characters added vs baseline
+    // is considered a non-fix (whitespace-only or comment-only edit).
+    const trivialWrites = modifiedFiles.filter(m => {
+      if (!m.verifiable || !m.currentContent) return false;
+      const meaningful = m.currentContent.replace(/\s+|\/\/[^\n]*/g, '');
+      return meaningful.length < 20;
+    });
+    const hasTrivialWrites = trivialWrites.length === modifiedFiles.length
+      && modifiedFiles.length > 0;
+
+    // ── Stage 7: DTA ──────────────────────────────────────────────────────────
     const hops = TASK_META.contextDistanceHops;
     const dtaScore = retrievalResults.reduce((acc, r, i) => {
       const mu = r.retrieved ? 1 : 0;
       const gamma = r.retrieved && symbolsPass && agentModifiedAny ? 1 : 0;
       const delta = Math.max(1, hops - i);
       return acc + (mu * gamma) / (delta + 1);
-    }, 0) / Math.max(1, requiredFiles.length);
+    }, 0) / Math.max(1, TASK_META.requiredContextFiles.length);
 
-    // ── Stage 6: ICU — Information Coverage Utilization ─────────────────────
-    const uniqueReads = new Set(readPaths.map(normPath)).size;
-    const redundancy = Math.max(0, readPaths.length - uniqueReads);
+    // ── Stage 8: ICU ──────────────────────────────────────────────────────────
+    const uniqueReadCount = new Set(readNorm).size;
+    const redundancy = Math.max(0, readPaths.length - uniqueReadCount);
     const icuScore = retrievalRate * (1 / (1 + redundancy * 0.1));
 
-    // ── Stage 7: Failure mode classification ─────────────────────────────────
-    // Classified for ALL runs (not just failures) so loops surface even on pass.
-    let failureMode: string;
+    // ── Stage 9: Operation sequence logging (#18) ─────────────────────────────
+    // Track order of read/write operations to diagnose reasoning patterns.
+    const operationSequence: Array<{ op: string; file: string; idx: number }> = [];
+    let opIdx = 0;
+    for (const entry of toolLogs) {
+      const log = entry as any;
+      const name: string = log.toolRequest?.name ?? '';
+      const args = parseArgs(log.toolRequest?.args);
+      const success = !!(log.toolRequest?.success);
 
-    const isLooping = readPaths.length > 4
-      && new Set(readPaths.map(normPath)).size < readPaths.length * 0.4;
+      if (name === 'read_file' && success) {
+        const fp = String(args['file_path'] ?? '');
+        if (fp) operationSequence.push({ op: 'read', file: norm(fp), idx: opIdx });
+      } else if (['write_file', 'create_file', 'replace'].includes(name) && success) {
+        const fp = String(args['file_path'] ?? args['path'] ?? '');
+        if (fp) operationSequence.push({ op: 'write', file: norm(fp), idx: opIdx });
+      }
+      opIdx++;
+    }
+
+    // Did agent read required context BEFORE making edits? (ideal pattern)
+    const firstWrite = operationSequence.find(o => o.op === 'write');
+    const requiredContextReadBeforeEdit = TASK_META.requiredContextFiles.every(rf => {
+      const t = norm(rf);
+      const firstReqRead = operationSequence.find(o => o.op === 'read' && (
+        o.file === t || o.file.endsWith('/' + t)
+      ));
+      return firstReqRead && (!firstWrite || firstReqRead.idx < firstWrite.idx);
+    });
+
+    // ── Stage 10: Failure mode classification (#17, #19) ─────────────────────
+    // Mutually exclusive classification in strict priority order.
+    // Fix #17: removed the unreachable branch.
+    // Fix #19: strict priority ordering eliminates overlap.
+
+    let failureMode: string;
+    const isLooping = readPaths.length > 6
+      && uniqueReadCount < readPaths.length * 0.4;
 
     if (!retrievalSuccess) {
-      // Never accessed the files needed to understand the problem
-      failureMode = 'context_substitution';
+      failureMode = 'context_substitution';          // never found required context
     } else if (!agentModifiedAny) {
-      // Read context but made no file changes
-      failureMode = 'false_end';
-    } else if (!symbolsPass && !contentUnverifiable) {
-      // Got context, made changes, but implementation is wrong
+      failureMode = hasTrivialWrites ? 'trivial_edit' : 'false_end';
+    } else if (!majorityModified) {
+      failureMode = 'partial_fix';                   // only fixed subset of required files
+    } else if (hasTrivialWrites) {
+      failureMode = 'trivial_edit';
+    } else if (!symbolsPass && contentVerifiable) {
       failureMode = 'retrieval_success_task_failure';
     } else if (isLooping) {
       failureMode = 'loops';
-    } else if (toolLogs.length > 40 && !agentModifiedAny) {
-      failureMode = 'inefficient_progress';
+    } else if (toolLogs.length > 40) {
+      failureMode = 'inefficient_progress';          // Fix #17: now reachable
     } else {
       failureMode = 'success';
     }
 
-    // Overall task success
-    const taskSuccess = retrievalSuccess && agentModifiedAny && symbolsPass;
+    const taskSuccess =
+      retrievalSuccess &&
+      agentModifiedAny &&
+      majorityModified &&
+      !hasTrivialWrites &&
+      symbolsPass;
 
-    // ── Stage 8: Structured JSONL logging ────────────────────────────────────
+    // ── Stage 11: Structured logging ─────────────────────────────────────────
     const logEntry = {
       ...TASK_META,
       timestamp: new Date().toISOString(),
       assertDurationMs: Date.now() - assertStart,
-      // Retrieval signals
+      // Retrieval
       retrievalSuccess,
       retrievalRate,
       retrievalResults,
-      // Implementation signals
-      agentModifiedFiles: [...agentWritten.keys()],
+      requiredContextReadBeforeEdit,
+      // Modification
       agentModifiedAny,
-      contentVerifiable: !contentUnverifiable,
+      modifiedFileCount: modifiedFiles.length,
+      unmodifiedExpectedFiles: unmodifiedFiles.map(m => m.path),
+      unexpectedWrites,
+      hasTrivialWrites,
       // Metrics
       taskSuccess,
       cpcScore,
@@ -346,7 +531,8 @@ evalTest('USUALLY_PASSES', {
       // Tool usage
       toolCallCount: toolLogs.length,
       totalReadPaths: readPaths.length,
-      uniqueReadPaths: new Set(readPaths.map(normPath)).size,
+      uniqueReadPaths: uniqueReadCount,
+      operationSequenceSummary: operationSequence.slice(0, 20),
       resultLength: result.length,
     };
 
@@ -356,46 +542,64 @@ evalTest('USUALLY_PASSES', {
         fs.mkdirSync(path.dirname(logPath), { recursive: true });
         fs.appendFileSync(logPath, JSON.stringify(logEntry) + '\n');
       } catch (e) {
-        // Non-fatal — log to stderr so we don't lose results silently
         process.stderr.write(`[LC_BENCH] Log write failed: ${String(e)}\n`);
       }
     } else {
       console.log('\nEVAL_RESULT:', JSON.stringify(logEntry, null, 2));
     }
 
-    // ── Stage 9: Assertion ────────────────────────────────────────────────────
-    // Gate 1 (hard): required context must have been read.
+    // ── Stage 12: Assertion gates ─────────────────────────────────────────────
+
+    // Gate 1 — required context must have been successfully read
     if (!retrievalSuccess) {
-      const missing = retrievalResults.filter(r => !r.retrieved).map(r => r.file).join(', ');
-      const seen = [...new Set(readPaths.map(normPath))].slice(0, 10).join(', ');
+      const missing = retrievalResults.filter(r => !r.retrieved).map(r => r.file);
+      const seen = [...new Set(readNorm)].slice(0, 8);
       throw new Error(
         `[${TASK_META.taskId}] FAILED — required context not retrieved.\n` +
-        `  Missing : ${missing}\n` +
-        `  Seen    : ${seen || '(nothing read)'}\n` +
+        `  Missing : ${missing.join(', ')}\n` +
+        `  Seen    : ${seen.join(', ') || '(nothing)'}\n` +
         `  Failure : ${failureMode}`,
       );
     }
 
-    // Gate 2 (hard): agent must have actually modified at least one file.
+    // Gate 2 — agent must have genuinely modified at least one expected file
     if (!agentModifiedAny) {
       throw new Error(
-        `[${TASK_META.taskId}] FAILED — no changed files were written.\n` +
-        `  Expected edits in: ${changedFiles.join(', ')}\n` +
-        `  Tool calls        : ${toolLogs.length}\n` +
-        `  Failure           : ${failureMode}`,
+        `[${TASK_META.taskId}] FAILED — no expected files were modified.\n` +
+        `  Expected edits: ${TASK_META.changedFiles.join(', ')}\n` +
+        `  Tool calls    : ${toolLogs.length}\n` +
+        `  Failure       : ${failureMode}`,
       );
     }
 
-    // Gate 3 (soft when content is unverifiable via patch tools):
-    // constraint symbols must appear in the written implementation.
-    if (!symbolsPass && !contentUnverifiable) {
-      const missing = symbolResults.filter(r => !r.found).map(r => r.symbol).join(', ');
+    // Gate 3 — majority of required changed files must be addressed
+    if (!majorityModified) {
       throw new Error(
-        `[${TASK_META.taskId}] FAILED — required symbols absent from implementation.\n` +
-        `  Missing symbols: ${missing}\n` +
-        `  CPC            : ${cpcScore.toFixed(2)} (${conclusiveCpc.filter(r => r.satisfied).length}/${conclusiveCpc.length} targets)\n` +
-        `  Modified files : ${[...agentWritten.keys()].join(', ')}\n` +
-        `  Failure        : ${failureMode}`,
+        `[${TASK_META.taskId}] FAILED — only partial fix (${modifiedFiles.length}` +
+        ` of ${TASK_META.changedFiles.length} files).\n` +
+        `  Unmodified: ${unmodifiedFiles.map(m => m.path).join(', ')}\n` +
+        `  Failure   : ${failureMode}`,
+      );
+    }
+
+    // Gate 4 — trivial/empty writes do not count as solutions
+    if (hasTrivialWrites) {
+      throw new Error(
+        `[${TASK_META.taskId}] FAILED — file(s) modified with trivial content.\n` +
+        `  Files: ${trivialWrites.map(m => m.path).join(', ')}\n` +
+        `  Failure: ${failureMode}`,
+      );
+    }
+
+    // Gate 5 — required symbols must be present in the implementation
+    if (!symbolsPass && contentVerifiable) {
+      const missing = symbolResults.filter(r => !r.found && !r.inconclusive)
+        .map(r => r.symbol);
+      throw new Error(
+        `[${TASK_META.taskId}] FAILED — required symbols absent.\n` +
+        `  Missing symbols: ${missing.join(', ')}\n` +
+        `  CPC: ${cpcScore.toFixed(2)} (${conclusiveCpc.filter(r => r.satisfied).length}/${conclusiveCpc.length})\n` +
+        `  Failure: ${failureMode}`,
       );
     }
   },
