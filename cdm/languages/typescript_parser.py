@@ -25,15 +25,15 @@ try:
 except ImportError:
     _TS_AVAILABLE = False
 
-# ── Regexes ───────────────────────────────────────────────────────────────────
+                                                                                
 
-# Simple: find every `from '...'` in a file — handles multi-line imports
+                                                                        
 _FROM_RE = re.compile(r"""from\s+['"]([^'"]+)['"]""")
 
-# Named imports: `import { Foo, Bar as B } from …`
+                                                  
 _NAMED_IMPORT_RE = re.compile(r"""import\s+(?:type\s+)?\{([^}]+)\}""", re.DOTALL)
 
-# Exported top-level declarations
+                                 
 _EXPORT_RE = re.compile(
     r"^export\s+(?:default\s+)?(?:abstract\s+)?"
     r"(?:class|function|interface|type|enum|const|let|var)\s+"
@@ -41,7 +41,7 @@ _EXPORT_RE = re.compile(
     re.MULTILINE,
 )
 
-# Re-exports: `export { Foo, Bar }`
+                                   
 _REEXPORT_RE = re.compile(r"export\s+\{([^}]+)\}", re.DOTALL)
 
 
@@ -71,7 +71,7 @@ class TypeScriptImportParser:
             except Exception:
                 self._use_treesitter = False
 
-    # ── Public ────────────────────────────────────────────────────────────────
+                                                                                
 
     def build_import_graph(self) -> nx.DiGraph:
         G = nx.DiGraph()
@@ -131,19 +131,19 @@ class TypeScriptImportParser:
         )
         return {m.group(1) for m in pattern.finditer(content)}
 
-    # ── Private ───────────────────────────────────────────────────────────────
+                                                                                
 
     def _collect_files(self) -> list[Path]:
         files = []
         for ext in self._EXTENSIONS:
             for f in self.subtree.rglob(f"*{ext}"):
-                # Skip declaration files — the root cause of 19016 nodes
+                                                                        
                 if f.name.endswith(".d.ts"):
                     continue
-                # Skip blacklisted directories
+                                              
                 if any(skip in f.parts for skip in self._SKIP_DIRS):
                     continue
-                # Skip test files
+                                 
                 name = f.name.lower()
                 if (
                     "test" in name
@@ -160,8 +160,8 @@ class TypeScriptImportParser:
         imports = []
         for m in _FROM_RE.finditer(content):
             path = m.group(1)
-            # Try to find named imports near this from clause
-            # Search for { ... } before `from`
+                                                             
+                                              
             before = content[max(0, m.start() - 200) : m.start()]
             names_m = _NAMED_IMPORT_RE.search(before)
             names = []
@@ -176,15 +176,15 @@ class TypeScriptImportParser:
     def _resolve_import(self, import_path: str, importing_file: str) -> Optional[str]:
         """Resolve a TS import path to a relative filepath within the repo."""
         if not import_path.startswith("."):
-            # Handle common path aliases
+                                        
             if import_path.startswith("@/"):
                 import_path = "src/" + import_path[2:]
             else:
-                return None  # External dependency
+                return None                       
 
         base = (Path(importing_file).parent / import_path).as_posix()
 
-        # Normalise ../ without touching filesystem
+                                                   
         parts: list[str] = []
         for part in base.split("/"):
             if part == "..":

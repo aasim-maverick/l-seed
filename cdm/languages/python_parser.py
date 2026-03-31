@@ -114,14 +114,14 @@ class PythonImportParser:
 
         symbols: set[str] = set()
 
-        # Only top-level nodes matter for exported symbols
+                                                          
         for node in ast.iter_child_nodes(tree):
-            # Functions and classes
+                                   
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 if not node.name.startswith("__"):
                     symbols.add(node.name)
 
-            # Regular assignments: x = value
+                                            
             elif isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
@@ -129,9 +129,9 @@ class PythonImportParser:
                         if not name.startswith("__") and len(name) >= 2:
                             symbols.add(name)
 
-            # Annotated assignments: x: Type = value  ← THE FIX
-            # This covers module-level proxies like:
-            #   session: "SessionMixin" = LocalProxy(...)
+                                                               
+                                                    
+                                                         
             elif isinstance(node, ast.AnnAssign):
                 if isinstance(node.target, ast.Name):
                     name = node.target.id

@@ -18,34 +18,34 @@ from typing import Optional
 import networkx as nx
 
 
-# ── Regex patterns ────────────────────────────────────────────────────────────
+                                                                                
 
 _IMPORT_BLOCK_RE = re.compile(r'import\s*\(\s*(.*?)\s*\)', re.DOTALL)
 _SINGLE_IMPORT_RE = re.compile(
     r'^import\s+(?:\w+\s+)?["\']([^"\']+)["\']', re.MULTILINE
 )
 
-# Exported top-level declarations (uppercase first letter = exported in Go)
+                                                                           
 _FUNC_RE = re.compile(r'^func\s+([A-Z][A-Za-z0-9_]*)\s*\(', re.MULTILINE)
 _TYPE_RE = re.compile(r'^type\s+([A-Z][A-Za-z0-9_]*)\s+\w', re.MULTILINE)
 _VAR_CONST_RE = re.compile(r'^(?:var|const)\s+([A-Z][A-Za-z0-9_]*)\b', re.MULTILINE)
 
-# Method with pointer receiver: func (r *ReceiverType) Method(...)
+                                                                  
 _METHOD_RECEIVER_RE = re.compile(
     r'^func\s+\(\s*\w+\s+\*?([A-Z][A-Za-z0-9_]*)\s*\)', re.MULTILINE
 )
 
-# Interface definitions
+                       
 _INTERFACE_RE = re.compile(
     r'^type\s+([A-Z][A-Za-z0-9_]*)\s+interface\s*\{', re.MULTILINE
 )
 
-# Struct definitions
+                    
 _STRUCT_RE = re.compile(
     r'^type\s+([A-Z][A-Za-z0-9_]*)\s+struct\s*\{', re.MULTILINE
 )
 
-# Explicit interface compliance check:  var _ InterfaceName = (*StructName)(nil)
+                                                                                
 _COMPLIANCE_RE = re.compile(
     r'var\s+_\s+([A-Z][A-Za-z0-9_]*)\s+=', re.MULTILINE
 )
@@ -66,13 +66,13 @@ class GoImportParser:
         self._pkg_to_files: dict[str, list[str]] = {}
         self._file_to_pkg: dict[str, str] = {}
 
-    # ── Public ────────────────────────────────────────────────────────────────
+                                                                                
 
     def build_import_graph(self) -> nx.DiGraph:
         G = nx.DiGraph()
         go_files = self._collect_files()
 
-        # Pass 1: register every file and map it to its full-module package path
+                                                                                
         for f in go_files:
             rel = str(f.relative_to(self.repo_root)).replace("\\", "/")
             pkg = self._file_package(f)
@@ -80,16 +80,16 @@ class GoImportParser:
             self._pkg_to_files.setdefault(pkg, []).append(rel)
             G.add_node(rel)
 
-        # Pass 2: add edges
+                           
         for f in go_files:
             src = str(f.relative_to(self.repo_root)).replace("\\", "/")
             try:
                 content = f.read_text(encoding="utf-8", errors="ignore")
                 for imp_pkg in self._extract_imports(content):
-                    # Only intra-repo imports
+                                             
                     if not imp_pkg.startswith(self._module_path):
                         continue
-                    # FIX: key is the FULL module path, not the stripped suffix
+                                                                               
                     target_files = self._pkg_to_files.get(imp_pkg, [])
                     for target in target_files:
                         if target != src and not G.has_edge(src, target):
@@ -114,7 +114,7 @@ class GoImportParser:
             return set()
 
         symbols: set[str] = set()
-        min_len = 3  # Go exports can be short: Ctx, Gin, Key, etc.
+        min_len = 3                                                
 
         for pattern in (_FUNC_RE, _TYPE_RE, _VAR_CONST_RE,
                         _METHOD_RECEIVER_RE, _INTERFACE_RE, _STRUCT_RE):
@@ -158,7 +158,7 @@ class GoImportParser:
             return False
         return bool(_COMPLIANCE_RE.search(content))
 
-    # ── Private ───────────────────────────────────────────────────────────────
+                                                                                
 
     def _detect_module_path(self) -> str:
         go_mod = self.repo_root / "go.mod"
@@ -187,14 +187,14 @@ class GoImportParser:
 
     def _extract_imports(self, content: str) -> list[str]:
         pkgs: list[str] = []
-        # Block: import ( ... )
+                               
         for block_m in _IMPORT_BLOCK_RE.finditer(content):
             for line in block_m.group(1).splitlines():
                 line = line.strip()
                 m = re.search(r'["\']([^"\']+)["\']', line)
                 if m:
                     pkgs.append(m.group(1))
-        # Single-line
+                     
         for m in _SINGLE_IMPORT_RE.finditer(content):
             pkgs.append(m.group(1))
         return pkgs

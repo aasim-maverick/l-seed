@@ -2,7 +2,7 @@
 extraction/viewer.py
 
 Interactive viewer for raw CDM candidates.
-Prints each candidate with full context and lets you tag it
+Prints each candidate with full context and supports tagging
 as 'keep', 'skip', or 'maybe'.
 
 Usage:
@@ -24,7 +24,7 @@ from pathlib import Path
 REPO_BASE = Path("data/repos")
 RAW_DIR = Path("data/tasks/raw")
 
-# ANSI colours for terminal output
+                                  
 _R = "\033[0m"
 _BOLD = "\033[1m"
 _GREEN = "\033[32m"
@@ -60,13 +60,13 @@ def _print_candidate(idx: int, total: int, c: dict) -> None:
     print()
     print(f"{_BOLD}Required context ({len(cdm['required_context_files'])}):{_R}")
     for rf in cdm["required_context_files"]:
-        # Mark if constraint-bearing
+                                    
         cb_marker = ""
         for d in cdm["required_context_details"]:
             if d["file"] == rf and d["is_constraint_bearing"]:
                 cb_marker = f" {_GREEN}[{d['constraint_type']}]{_R}"
         print(f"  {_CYAN}{rf}{_R}{cb_marker}")
-        # Print the symbols used from this file
+                                               
         for d in cdm["required_context_details"]:
             if d["file"] == rf:
                 syms = ", ".join(d["symbols_used"][:8])
@@ -127,7 +127,7 @@ def view_candidates(
     if limit:
         all_candidates = all_candidates[:limit]
 
-    tags: dict[str, str] = {}   # sha → tag
+    tags: dict[str, str] = {}              
 
     for i, candidate in enumerate(all_candidates):
         _print_candidate(i, len(all_candidates), candidate)
@@ -172,7 +172,7 @@ def _save_tags(tags: dict[str, str], candidates: list[dict]) -> None:
     out_path.write_text(json.dumps(tagged, indent=2))
     print(f"\n{_BOLD}Tags saved → {out_path}{_R}")
 
-    # Summary
+             
     keep = sum(1 for t in tagged if t["tag"] == "keep")
     maybe = sum(1 for t in tagged if t["tag"] == "maybe")
     skip = sum(1 for t in tagged if t["tag"] == "skip")

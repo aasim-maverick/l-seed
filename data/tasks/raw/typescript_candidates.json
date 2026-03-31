@@ -27,9 +27,9 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
+            "CompilerOptions",
             "ModuleResolutionKind",
-            "ResolutionMode",
-            "CompilerOptions"
+            "ResolutionMode"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -146,11 +146,11 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "DiagnosticMessage",
-            "ImportAttributes",
             "NamedExports",
-            "AssertClause",
-            "NamedImports"
+            "DiagnosticMessage",
+            "NamedImports",
+            "ImportAttributes",
+            "AssertClause"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -188,9 +188,9 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
+            "GetAccessorDeclaration",
             "SetAccessorDeclaration",
-            "JSDocPropertyTag",
-            "GetAccessorDeclaration"
+            "JSDocPropertyTag"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -270,9 +270,9 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "ElementAccessExpression",
+            "BinaryExpression",
             "PropertyAccessExpression",
-            "BinaryExpression"
+            "ElementAccessExpression"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -423,14 +423,14 @@
           "file": "src/compiler/types.ts",
           "symbols_used": [
             "ExportDeclaration",
-            "ScriptKind",
-            "CharacterCodes",
-            "Statement",
             "NodeBuilderFlags",
+            "Statement",
+            "ArrowFunction",
             "ModuleResolutionKind",
             "DotToken",
+            "ScriptKind",
             "FunctionExpression",
-            "ArrowFunction"
+            "CharacterCodes"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -468,9 +468,9 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "Expression",
+            "DotDotDotToken",
             "Identifier",
-            "DotDotDotToken"
+            "Expression"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -558,11 +558,11 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "SetAccessorDeclaration",
-            "Identifier",
             "QualifiedName",
             "ParameterDeclaration",
-            "JSDocParameterTag"
+            "SetAccessorDeclaration",
+            "JSDocParameterTag",
+            "Identifier"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -642,19 +642,19 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "ShiftOperatorOrHigher",
-            "ForInOrOfStatement",
-            "ShorthandPropertyAssignment",
-            "EqualsToken",
-            "PrefixUnaryExpression",
             "AssignmentExpression",
-            "VariableDeclarationList",
+            "PrefixUnaryExpression",
+            "ShorthandPropertyAssignment",
             "UnionType",
-            "ForOfStatement",
-            "ForInStatement",
-            "PostfixUnaryExpression",
+            "PropertyAssignment",
             "BinaryExpression",
-            "PropertyAssignment"
+            "ForInStatement",
+            "ShiftOperatorOrHigher",
+            "EqualsToken",
+            "ForOfStatement",
+            "VariableDeclarationList",
+            "PostfixUnaryExpression",
+            "ForInOrOfStatement"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -692,8 +692,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "Expression",
-            "PropertyAccessExpression"
+            "PropertyAccessExpression",
+            "Expression"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -731,11 +731,11 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "ShorthandPropertyAssignment",
             "Ternary",
-            "JsxAttribute",
+            "ShorthandPropertyAssignment",
             "UnionType",
-            "PropertyAssignment"
+            "PropertyAssignment",
+            "JsxAttribute"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -787,10 +787,10 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "Expression",
             "DiagnosticWithDetachedLocation",
             "DiagnosticMessage",
-            "DiagnosticArguments"
+            "DiagnosticArguments",
+            "Expression"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -887,12 +887,12 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "ModuleResolutionHost",
             "DiagnosticWithDetachedLocation",
             "DiagnosticMessage",
-            "DiagnosticArguments",
-            "Diagnostic",
             "DiagnosticWithLocation",
+            "DiagnosticArguments",
+            "ModuleResolutionHost",
+            "Diagnostic",
             "DiagnosticMessageChain"
           ],
           "centrality": 0.0,
@@ -951,9 +951,9 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "CharacterCodes",
+            "NumericLiteral",
             "MinusToken",
-            "NumericLiteral"
+            "CharacterCodes"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -1009,15 +1009,15 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "Expression",
-            "Modifier",
+            "PropertyDeclaration",
+            "NodeFactory",
             "PropertyName",
             "GetAccessorDeclaration",
-            "Decorator",
-            "TaggedTemplateExpression",
-            "NodeFactory",
             "Ternary",
-            "PropertyDeclaration",
+            "TaggedTemplateExpression",
+            "Modifier",
+            "Expression",
+            "Decorator",
             "ModifiersArray"
           ],
           "centrality": 0.0,
@@ -1095,8 +1095,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "NamespaceExport",
-            "ExportSpecifier"
+            "ExportSpecifier",
+            "NamespaceExport"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -1136,10 +1136,10 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "ElementAccessExpression",
             "PropertyAccessExpression",
             "MinusToken",
-            "LeftHandSideExpression"
+            "LeftHandSideExpression",
+            "ElementAccessExpression"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -1177,10 +1177,10 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "TupleType",
             "AccessFlags",
-            "ElementFlags",
-            "TupleTypeReference"
+            "TupleTypeReference",
+            "TupleType",
+            "ElementFlags"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -1232,10 +1232,10 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "UniqueESSymbolType",
-            "StringLiteral",
             "StringLiteralType",
+            "StringLiteral",
             "PropertyName",
+            "UniqueESSymbolType",
             "NumberLiteralType",
             "TransientSymbol"
           ],
@@ -1313,8 +1313,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "ArrowFunction",
-            "FunctionExpression"
+            "FunctionExpression",
+            "ArrowFunction"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -1518,11 +1518,11 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "Modifier",
-            "Identifier",
+            "ArrowFunction",
             "HasJSDoc",
             "EndOfFileToken",
-            "ArrowFunction",
+            "Modifier",
+            "Identifier",
             "NodeArray"
           ],
           "centrality": 0.0,
@@ -1561,8 +1561,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "FunctionDeclaration",
             "FunctionLikeDeclaration",
+            "FunctionDeclaration",
             "MethodDeclaration"
           ],
           "centrality": 0.0,
@@ -1601,8 +1601,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "UniqueESSymbolType",
             "StringLiteralType",
+            "UniqueESSymbolType",
             "NumberLiteralType"
           ],
           "centrality": 0.0,
@@ -1682,8 +1682,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "Identifier",
-            "QualifiedName"
+            "QualifiedName",
+            "Identifier"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -1721,8 +1721,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "WithStatement",
-            "ImportEqualsDeclaration"
+            "ImportEqualsDeclaration",
+            "WithStatement"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -1874,8 +1874,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "ClassLikeDeclaration",
-            "ClassDeclaration"
+            "ClassDeclaration",
+            "ClassLikeDeclaration"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -1951,8 +1951,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "IntersectionType",
             "TemplateLiteral",
+            "IntersectionType",
             "TemplateLiteralType"
           ],
           "centrality": 0.0,
@@ -2030,13 +2030,13 @@
           "file": "src/compiler/types.ts",
           "symbols_used": [
             "ObjectFlagsType",
-            "ImportAttribute",
-            "InstantiationExpressionType",
             "JSDocParsingMode",
-            "TemplateLiteral",
-            "AssertEntry",
             "ImportAttributes",
-            "AssertClause"
+            "AssertEntry",
+            "ImportAttribute",
+            "AssertClause",
+            "InstantiationExpressionType",
+            "TemplateLiteral"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -2227,9 +2227,9 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
+            "NodeBuilderFlags",
             "Identifier",
-            "TypeParameter",
-            "NodeBuilderFlags"
+            "TypeParameter"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -2267,10 +2267,10 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "TypeNode",
-            "MethodSignature",
             "DiagnosticMessage",
-            "FunctionLikeDeclaration"
+            "MethodSignature",
+            "FunctionLikeDeclaration",
+            "TypeNode"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -2310,9 +2310,9 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "ModuleResolutionHost",
             "CompilerOptions",
-            "CompilerHost"
+            "CompilerHost",
+            "ModuleResolutionHost"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -2445,8 +2445,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "Identifier",
-            "PrivateIdentifier"
+            "PrivateIdentifier",
+            "Identifier"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -2488,13 +2488,13 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "ResolvedProjectReference",
             "ResolutionMode",
-            "ResolvedModuleWithFailedLookupLocations",
-            "CompilerOptions",
-            "ModuleResolutionKind",
             "FilePreprocessingDiagnosticsKind",
+            "CompilerOptions",
+            "ResolvedModuleWithFailedLookupLocations",
             "ModuleResolutionHost",
+            "ModuleResolutionKind",
+            "ResolvedProjectReference",
             "ResolutionDiagnostics"
           ],
           "centrality": 0.0,
@@ -2533,8 +2533,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "IntersectionType",
             "Ternary",
+            "IntersectionType",
             "UnionType",
             "RelationComparisonResult"
           ],
@@ -2900,9 +2900,9 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "SwitchStatement",
             "DefaultClause",
-            "CaseClause"
+            "CaseClause",
+            "SwitchStatement"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -2942,8 +2942,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "Expression",
             "BinaryOperator",
+            "Expression",
             "BooleanLiteral"
           ],
           "centrality": 0.0,
@@ -2982,8 +2982,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "HasInitializer",
-            "VariableLikeDeclaration"
+            "VariableLikeDeclaration",
+            "HasInitializer"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -3304,8 +3304,8 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "InterfaceDeclaration",
-            "ClassDeclaration"
+            "ClassDeclaration",
+            "InterfaceDeclaration"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -3421,10 +3421,10 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
+            "SymbolId",
             "ImportDeclaration",
-            "SymbolTable",
             "ImportSpecifier",
-            "SymbolId"
+            "SymbolTable"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -3463,8 +3463,8 @@
           "file": "src/compiler/types.ts",
           "symbols_used": [
             "WatchDirectoryFlags",
-            "ParseConfigHost",
-            "ExitStatus"
+            "ExitStatus",
+            "ParseConfigHost"
           ],
           "centrality": 0.0,
           "hop_distance": 1,
@@ -3558,13 +3558,13 @@
         {
           "file": "src/compiler/types.ts",
           "symbols_used": [
-            "CompilerOptions",
+            "LibResolution",
             "ResolvedTypeReferenceDirectiveWithFailedLookupLocations",
-            "ResolvedProjectReference",
-            "ResolvedModuleWithFailedLookupLocations",
+            "CompilerOptions",
             "StringLiteralLike",
             "ResolutionMode",
-            "LibResolution"
+            "ResolvedModuleWithFailedLookupLocations",
+            "ResolvedProjectReference"
           ],
           "centrality": 0.0,
           "hop_distance": 1,

@@ -20,7 +20,7 @@ from typing import Generator, Optional
 
 from cdm.mapper import ContextDependencyMapper
 
-# ── Config ─────────────────────────────────────────────────────────────────────
+                                                                                 
 
 REPO_BASE = Path("data/repos")
 OUTPUT_DIR = Path("data/tasks/raw")
@@ -50,8 +50,8 @@ REPO_CONFIGS = [
         "id": "typescript",
         "path": REPO_BASE / "typescript",
         "language": "typescript",
-        "subtree": "src/compiler",   # only collect src/compiler as graph nodes
-        "min_files": 1,              # 1 changed compiler file is enough
+        "subtree": "src/compiler",                                             
+        "min_files": 1,                                                 
         "n_commits": 300,
         "min_irr": 0.18,
         "debug": True,
@@ -61,7 +61,7 @@ REPO_CONFIGS = [
 DEBUG_ALL = os.environ.get("DEBUG_MINING", "").strip() == "1"
 
 
-# ── Test-file predicates ───────────────────────────────────────────────────────
+                                                                                 
 
 _TEST_DIRS = {
     "tests", "test", "__tests__", "testdata",
@@ -76,7 +76,7 @@ _TEST_FILENAME_FRAGMENTS = (
 _NON_SOURCE_EXTS = (
     ".rst", ".md", ".txt", ".yaml", ".yml",
     ".toml", ".cfg", ".ini", ".lock", ".sum",
-    ".d.ts",   # TypeScript declaration files — not source
+    ".d.ts",                                              
 )
 
 _TS_TEST_SUBSTRINGS = (
@@ -89,12 +89,12 @@ def _is_test_file(filepath: str) -> bool:
     p_lower = p.lower()
     parts = p_lower.split("/")
 
-    # Check directory segments (not the filename)
+                                                 
     for part in parts[:-1]:
         if part in _TEST_DIRS:
             return True
 
-    # Filename patterns
+                       
     filename = parts[-1]
     for frag in _TEST_FILENAME_FRAGMENTS:
         if frag in filename:
@@ -102,12 +102,12 @@ def _is_test_file(filepath: str) -> bool:
     if filename.endswith("_test.go"):
         return True
 
-    # TS-specific substrings (mixed-case matters)
+                                                 
     for substr in _TS_TEST_SUBSTRINGS:
         if substr in p:
             return True
 
-    # Non-source extensions (includes .d.ts)
+                                            
     for ext in _NON_SOURCE_EXTS:
         if p_lower.endswith(ext):
             return True
@@ -122,14 +122,14 @@ def _is_source_file(filepath: str, language: str) -> bool:
     if language == "python":
         return p.endswith(".py")
     if language == "typescript":
-        # Exclude .d.ts — they're type declarations, not editable source
+                                                                        
         return (p.endswith(".ts") or p.endswith(".tsx")) and not p.endswith(".d.ts")
     if language == "go":
         return p.endswith(".go")
     return False
 
 
-# ── Git helpers ────────────────────────────────────────────────────────────────
+                                                                                 
 
 def _run_git(args: list[str], cwd: Path) -> str:
     result = subprocess.run(
@@ -166,7 +166,7 @@ def iter_commits(
             if f.strip() and _is_source_file(f.strip(), language)
         ]
 
-        # If subtree restriction: only count files in that subtree
+                                                                  
         if subtree:
             source_files = [f for f in source_files if f.startswith(subtree)]
 
@@ -179,7 +179,66 @@ def get_diff(repo_path: Path, sha: str) -> str:
     return _run_git(["diff", f"{sha}^", sha], repo_path)
 
 
-# ── Mining ─────────────────────────────────────────────────────────────────────
+                                                                                 
+
+def _detail_file(detail) -> str:
+    if hasattr(detail, "file"):
+        return detail.file
+    if isinstance(detail, dict):
+        return str(detail.get("file", ""))
+    return ""
+
+
+def _sanitize_cdm_result(cdm_result) -> int:
+    """
+    Strip test files from required context fields.
+
+    Supports both old and new CDM object shapes:
+    - v1: required_context_details
+    - v2: signal_details
+    """
+    original_required = list(getattr(cdm_result, "required_context_files", []))
+
+    detail_attr = None
+    if hasattr(cdm_result, "signal_details"):
+        detail_attr = "signal_details"
+    elif hasattr(cdm_result, "required_context_details"):
+        detail_attr = "required_context_details"
+
+    details = list(getattr(cdm_result, detail_attr, [])) if detail_attr else []
+    filtered_details = [d for d in details if not _is_test_file(_detail_file(d))]
+    if detail_attr is not None:
+        setattr(cdm_result, detail_attr, filtered_details)
+        setattr(
+            cdm_result,
+            "required_context_files",
+            [f for f in (_detail_file(d) for d in filtered_details) if f],
+        )
+    else:
+        cdm_result.required_context_files = [
+            f for f in getattr(cdm_result, "required_context_files", [])
+            if not _is_test_file(f)
+        ]
+
+    if hasattr(cdm_result, "constraint_bearing_files"):
+        cdm_result.constraint_bearing_files = [
+            f for f in cdm_result.constraint_bearing_files
+            if not _is_test_file(f)
+        ]
+
+                                                                         
+    if hasattr(cdm_result, "constraint_types") and hasattr(cdm_result, "signal_details"):
+        cdm_result.constraint_bearing_files = [
+            d.file for d in cdm_result.signal_details if getattr(d, "structural_score", 0.0) > 0.0
+        ]
+        cdm_result.constraint_types = list({
+            ("interface" if "interface" in d.structural_reason else
+             "type_file" if "types" in d.structural_reason else
+             "cross_file_method")
+            for d in cdm_result.signal_details if getattr(d, "structural_reason", "")
+        })
+
+    return len(original_required) - len(cdm_result.required_context_files)
 
 def mine_repo(config: dict) -> list[dict]:
     repo_id = config["id"]
@@ -225,17 +284,8 @@ def mine_repo(config: dict) -> list[dict]:
                 print(f"  CDM ERROR [{commit['sha'][:8]}]: {e}")
             continue
 
-        # Sanitise required context: remove test files
-        clean_required = [f for f in cdm_result.required_context_files
-                          if not _is_test_file(f)]
-        removed_count = len(cdm_result.required_context_files) - len(clean_required)
-        cdm_result.required_context_files = clean_required
-        cdm_result.required_context_details = [
-            d for d in cdm_result.required_context_details if not _is_test_file(d.file)
-        ]
-        cdm_result.constraint_bearing_files = [
-            f for f in cdm_result.constraint_bearing_files if not _is_test_file(f)
-        ]
+                                                      
+        removed_count = _sanitize_cdm_result(cdm_result)
 
         if not cdm_result.required_context_files:
             if debug:

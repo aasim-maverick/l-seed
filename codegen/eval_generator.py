@@ -33,14 +33,14 @@ from typing import Optional
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-# ── Config ────────────────────────────────────────────────────────────────────
+                                                                                
 
-MAX_REQUIRED_CHARS = 80_000  # ~20k tokens; required context is sacred
-MAX_CHANGED_CHARS  = 20_000  # ~5k tokens; pre-fix baseline
-CONTEXT_LINES      = 60      # lines around each symbol hit for guided extraction
+MAX_REQUIRED_CHARS = 80_000                                           
+MAX_CHANGED_CHARS  = 20_000                                
+CONTEXT_LINES      = 60                                                          
 
 
-# ── Git helpers ───────────────────────────────────────────────────────────────
+                                                                                
 
 def _git_show(repo_path: Path, git_ref: str, filepath: str) -> str:
     result = subprocess.run(
@@ -58,7 +58,7 @@ def _md5(content: str) -> str:
     return hashlib.md5(content.encode('utf-8')).hexdigest()
 
 
-# ── Smart truncation ─────────────────────────────────────────────────────────
+                                                                               
 
 def _comment(language: str) -> str:
     return '//' if language in ('typescript', 'go') else '#'
@@ -148,7 +148,7 @@ def _truncate_changed(content: str, language: str, filepath: str) -> str:
     return head + f'\n{cmt} ... [file truncated — use read_file for complete content]'
 
 
-# ── File loader ───────────────────────────────────────────────────────────────
+                                                                                
 
 def load_files_for_task(task: dict, repo_base: Path) -> dict[str, str]:
     repo_id: str = task['repo_id']
@@ -156,16 +156,16 @@ def load_files_for_task(task: dict, repo_base: Path) -> dict[str, str]:
     language: str = task.get('language', 'python')
     repo_path = repo_base / repo_id
 
-    # Guide symbols: from assert_design and CDM required_context_details
+                                                                        
     guide_symbols: list[str] = list(set(
         task.get('assert_design', {}).get('constraint_symbols', [])
     ))
-    # Also pull symbols from CDM details
+                                        
     for d in task.get('required_context_details', []):
         guide_symbols.extend(d.get('symbols_used', []))
-    # Also pull from constraint_propagation_targets descriptions
+                                                                
     for t in task.get('constraint_propagation_targets', []):
-        # Extract identifiers from pattern strings
+                                                  
         import re
         ids = re.findall(r'[A-Za-z_][A-Za-z0-9_]{2,}', t.get('pattern', ''))
         guide_symbols.extend(ids)
@@ -177,15 +177,15 @@ def load_files_for_task(task: dict, repo_base: Path) -> dict[str, str]:
 
     files: dict[str, str] = {}
 
-    # ── Changed files (pre-fix, from parent commit) ───────────────────────────
+                                                                                
     for filepath in changed_files:
         content = _git_show(repo_path, parent_ref, filepath)
         if not content:
-            # New file added in this commit — may not exist at parent
+                                                                     
             content = f'{_comment(language)} New file (did not exist before this commit)'
         files[filepath] = _truncate_changed(content, language, filepath)
 
-    # ── Required context files (at commit, not changed by diff) ──────────────
+                                                                               
     for filepath in task.get('required_context_files', []):
         content = _git_show(repo_path, commit_sha, filepath)
         if not content:
@@ -197,7 +197,7 @@ def load_files_for_task(task: dict, repo_base: Path) -> dict[str, str]:
             continue
 
         if len(content) <= MAX_REQUIRED_CHARS:
-            files[filepath] = content   # Full — ideal path
+            files[filepath] = content                      
         else:
             print(
                 f'  [INFO] {filepath} ({len(content):,} chars) > {MAX_REQUIRED_CHARS:,} limit'
@@ -211,7 +211,7 @@ def load_files_for_task(task: dict, repo_base: Path) -> dict[str, str]:
     return files
 
 
-# ── Jinja2 environment ────────────────────────────────────────────────────────
+                                                                                
 
 def _make_env(template_dir: Path) -> Environment:
     env = Environment(
@@ -224,7 +224,7 @@ def _make_env(template_dir: Path) -> Environment:
     return env
 
 
-# ── Generator ────────────────────────────────────────────────────────────────
+                                                                               
 
 class EvalGenerator:
 
@@ -264,7 +264,7 @@ class EvalGenerator:
             output_path.write_text(rendered, encoding='utf-8')
             print(f'  Written  → {output_path}')
 
-        # Summary
+                 
         total = sum(len(v) for v in files.values())
         print(f'  Files: {len(files)} included, {total:,} chars total')
         for fp, content in files.items():

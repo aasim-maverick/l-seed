@@ -1,21 +1,18 @@
 """
-cdm/mapper.py  (Day 2 — fixed)
+Context Dependency Mapper.
 
-Fixes:
-1. Accepts `subtree` parameter and passes it to TypeScript parser.
-2. Stage 3 is now language-aware:
-     Python: ABC/Protocol/TypedDict/dataclass/type-alias detection (unchanged)
-     Go:     exported interface detection (new)
-     TS:     exported interface/abstract class detection (new)
-3. Stage 4 is now language-aware:
-     Python/TS: symbol-overlap-based fractional score (unchanged)
-     Go:        interface-count + centrality + structural score (new)
-4. Min symbol length is 3 for Go (Go exports short names: Gin, Ctx, Key).
-5. _symbols_from_diff now includes context and removed lines (not just +lines).
+This module identifies required context files for a change by combining
+four signals per candidate file: import distance, symbol/type relevance,
+structural coupling, and test proximity.
+
+Files above the relevance threshold are included in required context.
+Task-level metrics such as irreducibility score, RFS, and CFRD are then
+computed from the selected files and graph relationships.
 """
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -23,59 +20,76 @@ from typing import Optional
 
 import networkx as nx
 
+                                                                                
 
-# ── Noise filter ──────────────────────────────────────────────────────────────
+                                                                  
+RELEVANCE_THRESHOLD = 0.18
 
-_NOISE_SYMBOLS: frozenset[str] = frozenset({
-    "self", "cls", "None", "True", "False", "str", "int", "float",
-    "bool", "list", "dict", "set", "tuple", "type", "Any", "Optional",
-    "Union", "List", "Dict", "Tuple", "Set", "Type", "Iterator",
-    "Generator", "Callable", "Sequence", "Mapping", "Iterable",
-    "return", "yield", "raise", "pass", "import", "from", "class",
-    "def", "if", "else", "elif", "for", "while", "with", "try",
-    "except", "finally", "and", "or", "not", "in", "is", "as",
-    "lambda", "async", "await", "super", "object",
-    # Go-specific noise
-    "nil", "make", "new", "len", "cap", "append", "delete",
-    "range", "chan", "func", "interface", "struct", "map",
-    "var", "const", "type", "package", "import", "return",
-    "defer", "go", "select", "case", "default", "fallthrough",
-    "break", "continue", "goto",
+                                         
+W_IMPORT     = 0.30
+W_TYPE       = 0.35
+W_STRUCTURAL = 0.25
+W_TEST       = 0.10
+
+                                                               
+W_DEPTH    = 0.30
+W_IFACE    = 0.25
+W_BREADTH  = 0.20
+W_LOCAL    = 0.15
+W_CFRD     = 0.10                                                                      
+
+                                                                
+NOISE_SYMBOLS: frozenset[str] = frozenset({
+                       
+    "self", "cls", "this", "super", "None", "nil", "null", "true", "false",
+    "string", "int", "float", "bool", "any", "void", "error", "err",
+    "ctx", "req", "res", "resp", "request", "response", "context",
+    "data", "result", "value", "values", "key", "keys", "name",
+    "path", "args", "kwargs", "opts", "options",
+            
+    "object", "type", "list", "dict", "set", "tuple",
+                
+    "string", "number", "boolean", "object", "unknown", "never",
+        
+    "func", "struct", "interface", "map", "chan", "make", "new", "len", "cap",
 })
 
-# Minimum token length — 3 for Go (short exported names), 4 for others
-_MIN_LEN_DEFAULT = 4
-_MIN_LEN_GO = 3
+                                         
+MIN_SYM_LEN = 4
 
 
-# ── Data classes ──────────────────────────────────────────────────────────────
+                                                                                
 
 @dataclass
-class SymbolDependency:
+class SignalBreakdown:
+    """Four-signal breakdown for a single candidate file."""
     file: str
-    symbols_used: list[str]
-    centrality: float
-    hop_distance: int
-    is_constraint_bearing: bool = False
-    constraint_type: str = ""
+    import_score: float     = 0.0
+    type_score: float       = 0.0
+    structural_score: float = 0.0
+    test_proximity: float   = 0.0
+    rcs: float              = 0.0                
+    hop_distance: int       = 1
+    exclusive_symbols: list[str] = field(default_factory=list)
+    structural_reason: str  = ""                               
 
 
 @dataclass
 class ContextDependencyMap:
     changed_files: list[str]
     required_context_files: list[str]
-    required_context_details: list[SymbolDependency]
+    signal_details: list[SignalBreakdown]
     context_distance_hops: int
     irreducibility_score: float
-    symbol_dependencies: list[SymbolDependency]
-    constraint_bearing_files: list[str] = field(default_factory=list)
-    constraint_types_found: list[str] = field(default_factory=list)
+    rfs: float                                                                  
+    cfrd: float                                                              
+    constraint_bearing_files: list[str]
+    constraint_types: list[str]
 
-    def is_valid_task(self, min_irr: float = 0.25) -> bool:
+    def is_valid_task(self, min_irr: float = 0.20) -> bool:
         return (
             len(self.required_context_files) > 0
             and self.irreducibility_score >= min_irr
-            and self.context_distance_hops >= 1
         )
 
     def to_dict(self) -> dict:
@@ -84,162 +98,83 @@ class ContextDependencyMap:
             "required_context_files": self.required_context_files,
             "context_distance_hops": self.context_distance_hops,
             "irreducibility_score": round(self.irreducibility_score, 4),
+            "rfs": round(self.rfs, 4),
+            "cfrd": round(self.cfrd, 4),
             "constraint_bearing_files": self.constraint_bearing_files,
-            "constraint_types_found": self.constraint_types_found,
+            "constraint_types_found": self.constraint_types,
             "required_context_details": [
                 {
                     "file": d.file,
-                    "symbols_used": d.symbols_used,
-                    "centrality": round(d.centrality, 5),
+                    "rcs": round(d.rcs, 4),
+                    "import_score": round(d.import_score, 4),
+                    "type_score": round(d.type_score, 4),
+                    "structural_score": round(d.structural_score, 4),
+                    "test_proximity": round(d.test_proximity, 4),
                     "hop_distance": d.hop_distance,
-                    "is_constraint_bearing": d.is_constraint_bearing,
-                    "constraint_type": d.constraint_type,
+                    "exclusive_symbols": d.exclusive_symbols[:8],
+                    "structural_reason": d.structural_reason,
+                    "is_constraint_bearing": d.rcs > 0.35,
                 }
-                for d in self.required_context_details
+                for d in self.signal_details
             ],
         }
 
 
-# ── Diff symbol extraction ────────────────────────────────────────────────────
+                                                                                
 
-def _symbols_from_diff(diff_text: str, min_len: int = _MIN_LEN_DEFAULT) -> set[str]:
+def _extract_diff_symbols(diff_text: str, min_len: int = MIN_SYM_LEN) -> set[str]:
     """
-    Extract identifiers from ALL code lines in a unified diff:
-    context lines, added lines (+), and removed lines (-).
-    Including removed/context lines captures dependencies in the surrounding
-    code that must be understood even when not explicitly rewritten.
+    Extract all meaningful identifiers from both added (+) and removed (-)
+    lines of a unified diff, plus context lines.  Context lines matter because
+    the unchanged surrounding code often references the symbols that make a
+    dependency load-bearing.
     """
     symbols: set[str] = set()
     for line in diff_text.splitlines():
-        if (line.startswith("+++") or line.startswith("---")
-                or line.startswith("@@") or line.startswith("diff ")
-                or line.startswith("index ") or line.startswith("new file")
-                or line.startswith("old file")):
+        if line.startswith(("+++", "---", "@@", "diff ", "index ")):
             continue
-        code = line[1:] if (line.startswith("+") or line.startswith("-")
-                             or line.startswith(" ")) else None
-        if code is None:
-            continue
+                                           
+        code = line[1:] if line and line[0] in ("+", "-", " ") else line
         for tok in re.findall(r"\b([A-Za-z_][A-Za-z0-9_]+)\b", code):
-            if len(tok) >= min_len and tok not in _NOISE_SYMBOLS:
+            if len(tok) >= min_len and tok not in NOISE_SYMBOLS:
                 symbols.add(tok)
     return symbols
 
 
-def _annotation_symbols_from_diff(diff_text: str) -> set[str]:
-    """Symbols in type-annotation positions of added lines — higher confidence."""
+def _extract_annotation_symbols(diff_text: str) -> set[str]:
+    """
+    Extract symbols that appear in type annotation positions in added lines.
+    These carry higher confidence than arbitrary identifier occurrences
+    because they directly constrain what types the implementation must use.
+    """
     symbols: set[str] = set()
     for line in diff_text.splitlines():
-        if line.startswith("+++") or not line.startswith("+"):
+        if not line.startswith("+") or line.startswith("+++"):
             continue
         code = line[1:]
+                                                   
         for m in re.finditer(r"->\s*([A-Za-z_][A-Za-z0-9_\[\], |]*?)(?:\s*:|\s*$)", code):
             for tok in re.findall(r"\b([A-Za-z_][A-Za-z0-9_]+)\b", m.group(1)):
-                if len(tok) >= 4 and tok not in _NOISE_SYMBOLS:
+                if len(tok) >= MIN_SYM_LEN and tok not in NOISE_SYMBOLS:
                     symbols.add(tok)
+                                                  
         for m in re.finditer(r":\s*([A-Za-z_][A-Za-z0-9_\[\], |]*?)(?:\s*[,)=])", code):
             for tok in re.findall(r"\b([A-Za-z_][A-Za-z0-9_]+)\b", m.group(1)):
-                if len(tok) >= 4 and tok not in _NOISE_SYMBOLS:
+                if len(tok) >= MIN_SYM_LEN and tok not in NOISE_SYMBOLS:
                     symbols.add(tok)
     return symbols
 
 
-# ── Python constraint classifier ──────────────────────────────────────────────
-
-import ast as _ast
-
-_ABC_BASES = {"ABC", "ABCMeta", "Protocol"}
-_TYPED_DICT_BASES = {"TypedDict"}
-_PROTOCOL_BASES = {"Protocol"}
-_DATACLASS_DECORATORS = {"dataclass", "attrs", "attr.s"}
-
-
-def _classify_constraint_python(filepath: str, repo_root: Path) -> tuple[bool, str]:
-    full = repo_root / filepath
-    if not full.exists():
-        return False, ""
-    try:
-        tree = _ast.parse(full.read_text(encoding="utf-8", errors="ignore"))
-    except SyntaxError:
-        return False, ""
-
-    for node in _ast.walk(tree):
-        if isinstance(node, _ast.ClassDef):
-            base_names = {
-                b.id if isinstance(b, _ast.Name) else
-                b.attr if isinstance(b, _ast.Attribute) else ""
-                for b in node.bases
-            }
-            if base_names & _ABC_BASES:
-                return True, "abc"
-            if base_names & _TYPED_DICT_BASES:
-                return True, "typeddict"
-            if base_names & _PROTOCOL_BASES:
-                return True, "protocol"
-            for d in node.decorator_list:
-                dname = (d.id if isinstance(d, _ast.Name) else
-                         d.attr if isinstance(d, _ast.Attribute) else
-                         d.func.id if isinstance(d, _ast.Call) and isinstance(d.func, _ast.Name) else "")
-                if dname in _DATACLASS_DECORATORS:
-                    return True, "dataclass"
-
-        if isinstance(node, _ast.Assign):
-            for t in node.targets:
-                if isinstance(t, _ast.Name) and t.id[0:1].isupper():
-                    rhs = _ast.unparse(node.value) if hasattr(_ast, "unparse") else ""
-                    if any(kw in rhs for kw in ("Union", "Optional", "Literal", "TypeVar")):
-                        return True, "type_alias"
-
-    return False, ""
-
-
-# ── Go constraint classifier ──────────────────────────────────────────────────
-
-_GO_INTERFACE_RE = re.compile(
-    r'^type\s+([A-Z][A-Za-z0-9_]*)\s+interface\s*\{', re.MULTILINE
-)
-
-
-def _classify_constraint_go(filepath: str, repo_root: Path, parser) -> tuple[bool, str]:
-    """
-    A Go file is constraint-bearing if it defines exported interfaces.
-    Go's type system uses structural (duck-type) interfaces — any file
-    that defines an interface type is an implicit constraint on callers.
-    """
-    interfaces = parser.get_interface_names(filepath)
-    if interfaces:
-        return True, "interface"
-    # Struct types used as function parameter/return types are also constraints
-    structs = parser.get_struct_names(filepath)
-    if structs:
-        return True, "struct"
-    return False, ""
-
-
-# ── TS constraint classifier ──────────────────────────────────────────────────
-
-def _classify_constraint_ts(filepath: str, repo_root: Path, parser) -> tuple[bool, str]:
-    interfaces = parser.get_interface_names(filepath)
-    if interfaces:
-        return True, "interface"
-    fname = Path(filepath).name.lower()
-    if any(kw in fname for kw in ("type", "types", "interface", "model", "schema")):
-        return True, "type_file"
-    return False, ""
-
-
-# ── Lifecycle heuristic (language-agnostic) ───────────────────────────────────
-
-_LIFECYCLE_RE = re.compile(
-    r"\b(open|close|push|pop|init|setup|teardown|create|destroy|"
-    r"start|stop|begin|end|enter|exit|acquire|release)\b",
-    re.IGNORECASE,
-)
-
-
-# ── Main mapper ───────────────────────────────────────────────────────────────
+                                                                                
 
 class ContextDependencyMapper:
+    """
+    Multi-signal context dependency mapper.
+
+    Usage:
+        mapper = ContextDependencyMapper("data/repos/flask", "python")
+        result = mapper.analyze(changed_files, diff_text)
+    """
 
     def __init__(
         self,
@@ -248,255 +183,308 @@ class ContextDependencyMapper:
         subtree: Optional[str] = None,
     ):
         self.repo_path = Path(repo_path).resolve()
-        self.language = language.lower()
-        self.subtree = subtree
-        self._min_len = _MIN_LEN_GO if self.language == "go" else _MIN_LEN_DEFAULT
+        self.language  = language.lower()
+        self.subtree   = subtree
+        self._min_sym_len = 3 if self.language == "go" else MIN_SYM_LEN
 
-        self.G: nx.DiGraph = self._build_graph()
-        self.centrality: dict[str, float] = nx.betweenness_centrality(self.G)
-        self._symbol_cache: dict[str, set[str]] = {}
+                                                          
+        self._parser, self.G = self._build_graph()
+        self._centrality: dict[str, float] = nx.betweenness_centrality(self.G)
+        self._sym_cache:  dict[str, set[str]] = {}
 
-    # ── Graph ─────────────────────────────────────────────────────────────────
+                                                                                
 
-    def _build_graph(self) -> nx.DiGraph:
+    def _build_graph(self) -> tuple:
         if self.language == "python":
             from cdm.languages.python_parser import PythonImportParser
-            self._parser = PythonImportParser(str(self.repo_path))
+            p = PythonImportParser(str(self.repo_path))
         elif self.language == "typescript":
             from cdm.languages.typescript_parser import TypeScriptImportParser
-            self._parser = TypeScriptImportParser(
-                str(self.repo_path), subtree=self.subtree
-            )
+            p = TypeScriptImportParser(str(self.repo_path), subtree=self.subtree)
         elif self.language == "go":
             from cdm.languages.go_parser import GoImportParser
-            self._parser = GoImportParser(str(self.repo_path))
+            p = GoImportParser(str(self.repo_path))
         else:
             raise NotImplementedError(f"Unsupported language: {self.language}")
-        return self._parser.build_import_graph()
+        return p, p.build_import_graph()
 
-    def _exported_symbols(self, filepath: str) -> set[str]:
-        if filepath not in self._symbol_cache:
-            self._symbol_cache[filepath] = self._parser.get_exported_symbols(filepath)
-        return self._symbol_cache[filepath]
+    def _symbols(self, filepath: str) -> set[str]:
+        """Cached exported symbol lookup."""
+        if filepath not in self._sym_cache:
+            self._sym_cache[filepath] = self._parser.get_exported_symbols(filepath)
+        return self._sym_cache[filepath]
 
-    def _min_hop_distance(self, changed_files: list[str], target: str) -> int:
-        min_dist = float("inf")
-        for cf in changed_files:
-            if not self.G.has_node(cf) or not self.G.has_node(target):
-                continue
-            try:
-                d = nx.shortest_path_length(self.G, cf, target)
-                if d < min_dist:
-                    min_dist = d
-            except nx.NetworkXNoPath:
-                pass
-        return int(min_dist) if min_dist != float("inf") else 1
+    def _interfaces(self, filepath: str) -> set[str]:
+        """Interface / ABC / Protocol names defined in this file."""
+        if hasattr(self._parser, "get_interface_names"):
+            return self._parser.get_interface_names(filepath)
+        return set()
 
-    # ── Stage 1 ───────────────────────────────────────────────────────────────
+                                                                                
 
-    def _stage1_syntactic_deps(self, changed_files: list[str]) -> dict[str, list[str]]:
-        result: dict[str, list[str]] = {}
+    def _import_score(self, changed_files: list[str], candidate: str) -> tuple[float, int]:
+        """
+        Returns (score, min_hops).
+        Direct import from any changed file scores 1.0; each additional hop
+        multiplies by 0.6 (geometric decay — being two hops away halves the
+        signal compared to being one hop away).
+        """
+        if not self.G.has_node(candidate):
+            return 0.0, 99
+
+        min_hops = 99
         for cf in changed_files:
             if not self.G.has_node(cf):
                 continue
-            deps = [d for d in self.G.successors(cf) if d not in changed_files]
-            if deps:
-                result[cf] = deps
-        return result
+            try:
+                d = nx.shortest_path_length(self.G, cf, candidate)
+                min_hops = min(min_hops, d)
+            except nx.NetworkXNoPath:
+                pass
 
-    # ── Stage 2 ───────────────────────────────────────────────────────────────
+        if min_hops == 99:
+            return 0.0, 99
 
-    def _stage2_semantic_filter(
+                                                                         
+        score = 0.6 ** (min_hops - 1)
+        return round(score, 4), min_hops
+
+                                                                                
+
+    def _type_score(
         self,
-        syntactic_deps: dict[str, list[str]],
+        candidate: str,
         diff_symbols: set[str],
         changed_files: list[str],
-    ) -> list[SymbolDependency]:
-        all_deps: set[str] = set()
-        for deps in syntactic_deps.values():
-            all_deps.update(deps)
-
-        result: list[SymbolDependency] = []
-        for dep_file in all_deps:
-            exported = self._exported_symbols(dep_file)
-            used = [
-                s for s in exported
-                if s in diff_symbols
-                and len(s) >= self._min_len
-                and s not in _NOISE_SYMBOLS
-            ]
-            if used:
-                hop = self._min_hop_distance(changed_files, dep_file)
-                result.append(SymbolDependency(
-                    file=dep_file,
-                    symbols_used=used,
-                    centrality=self.centrality.get(dep_file, 0.0),
-                    hop_distance=hop,
-                ))
-        return result
-
-    # ── Stage 3 ───────────────────────────────────────────────────────────────
-
-    def _stage3_constraint_bearing(
-        self,
-        semantic_deps: list[SymbolDependency],
         annotation_symbols: set[str],
-    ) -> list[SymbolDependency]:
-        enriched: list[SymbolDependency] = []
-        for dep in semantic_deps:
-            is_cb, ct = self._classify_dep(dep, annotation_symbols)
-            enriched.append(SymbolDependency(
-                file=dep.file,
-                symbols_used=dep.symbols_used,
-                centrality=dep.centrality,
-                hop_distance=dep.hop_distance,
-                is_constraint_bearing=is_cb,
-                constraint_type=ct,
-            ))
-        return enriched
-
-    def _classify_dep(
-        self,
-        dep: SymbolDependency,
-        annotation_symbols: set[str],
-    ) -> tuple[bool, str]:
-        """Dispatch to language-specific constraint classifier."""
-        if self.language == "python":
-            # Annotation overlap → higher confidence, then structural check
-            ann_overlap = [s for s in dep.symbols_used if s in annotation_symbols]
-            if ann_overlap:
-                is_cb, ct = _classify_constraint_python(dep.file, self.repo_path)
-                if is_cb:
-                    return is_cb, ct
-            # Lifecycle coupling
-            lc = [s for s in dep.symbols_used if _LIFECYCLE_RE.search(s)]
-            if lc:
-                return True, "lifecycle"
-            # High centrality + multiple symbols
-            if dep.centrality > 0.05 and len(dep.symbols_used) >= 2:
-                return True, "cross_file_method"
-            return False, ""
-
-        elif self.language == "go":
-            # Go: any imported file that defines interfaces is constraint-bearing
-            # regardless of annotation overlap (Go uses structural typing)
-            is_cb, ct = _classify_constraint_go(dep.file, self.repo_path, self._parser)
-            if is_cb:
-                return is_cb, ct
-            # Compliance check in the changed file is also a strong signal
-            for cf in [dep.file]:
-                if hasattr(self._parser, "has_interface_compliance_checks"):
-                    if self._parser.has_interface_compliance_checks(cf):
-                        return True, "compliance_check"
-            # Lifecycle coupling
-            lc = [s for s in dep.symbols_used if _LIFECYCLE_RE.search(s)]
-            if lc:
-                return True, "lifecycle"
-            return False, ""
-
-        elif self.language == "typescript":
-            ann_overlap = [s for s in dep.symbols_used if s in annotation_symbols]
-            if ann_overlap:
-                is_cb, ct = _classify_constraint_ts(dep.file, self.repo_path, self._parser)
-                if is_cb:
-                    return is_cb, ct
-            # Filename heuristic
-            fname = Path(dep.file).name.lower()
-            if any(kw in fname for kw in ("type", "types", "interface", "model")):
-                return True, "type_file"
-            if dep.centrality > 0.02 and len(dep.symbols_used) >= 2:
-                return True, "cross_file_method"
-            return False, ""
-
-        return False, ""
-
-    # ── Stage 4 ───────────────────────────────────────────────────────────────
-
-    def _stage4_irreducibility(
-        self,
-        deps: list[SymbolDependency],
-        diff_symbols: set[str],
-        changed_files: list[str],
-    ) -> float:
-        if not deps:
-            return 0.0
-        if self.language == "go":
-            return self._irr_go(deps)
-        return self._irr_symbolic(deps, diff_symbols, changed_files)
-
-    def _irr_symbolic(
-        self,
-        deps: list[SymbolDependency],
-        diff_symbols: set[str],
-        changed_files: list[str],
-    ) -> float:
+    ) -> tuple[float, list[str]]:
         """
-        Python/TS: fractional score based on symbol overlap + structural boosts.
+        Returns (score, exclusive_symbols).
+        Exclusive symbols are those exported by the candidate but NOT
+        re-exported or defined in any changed file.  Only exclusive symbols
+        count — this eliminates the common-name noise problem.
         """
+        candidate_exports = self._symbols(candidate)
+
+                                                                    
+        local_symbols: set[str] = set()
+        for cf in changed_files:
+            local_symbols.update(self._symbols(cf))
+
+                                                                           
+        exclusive = [
+            s for s in candidate_exports
+            if s in diff_symbols
+            and s not in local_symbols
+            and len(s) >= self._min_sym_len
+            and s not in NOISE_SYMBOLS
+        ]
+
         if not diff_symbols:
-            return 0.0
+            return 0.0, []
 
-        total_in_diff = 0
-        for dep in deps:
-            exported = self._exported_symbols(dep.file)
-            total_in_diff += sum(
-                1 for s in exported
-                if s in diff_symbols and len(s) >= self._min_len
-                and s not in _NOISE_SYMBOLS
+                                                                           
+                                                          
+        annotation_exclusive = [s for s in exclusive if s in annotation_symbols]
+        weighted_exclusive = len(exclusive) + len(annotation_exclusive)
+        score = min(1.0, weighted_exclusive / max(1, len(diff_symbols)) * 4.0)
+        return round(score, 4), exclusive
+
+                                                                                
+
+    def _structural_score(
+        self,
+        candidate: str,
+        diff_symbols: set[str],
+        changed_files: list[str],
+    ) -> tuple[float, str]:
+        """
+        Language-specific structural coupling detection.
+        Returns (score, human_readable_reason).
+
+        Go: does the candidate define an exported interface whose name
+            appears in the diff?  Interface coupling in Go is implicit
+            (duck typing), so lexical overlap here means real coupling.
+
+        Python: does the candidate define an ABC, Protocol, or TypedDict
+                whose name appears in the diff annotations?
+
+        TypeScript: does the candidate define an exported interface or
+                    type alias appearing in diff annotations?
+        """
+        interfaces = self._interfaces(candidate)
+        if not interfaces:
+                                                                      
+            fname = Path(candidate).name.lower()
+            is_types_file = any(kw in fname for kw in (
+                "types", "type", "interfaces", "interface",
+                "models", "model", "schema", "proto", "mixin",
+            ))
+            if not is_types_file:
+                return 0.0, ""
+
+                                                         
+        iface_hits = [i for i in interfaces if i in diff_symbols and i not in NOISE_SYMBOLS]
+        if iface_hits:
+            reason = f"defines interface(s) used in diff: {', '.join(iface_hits[:3])}"
+                                                             
+            score = min(1.0, len(iface_hits) * 0.5)
+            return round(score, 4), reason
+
+                                                  
+        fname = Path(candidate).name.lower()
+        if any(kw in fname for kw in ("types", "interfaces", "schema")):
+                                                         
+            hits = [s for s in self._symbols(candidate) if s in diff_symbols
+                    and s not in NOISE_SYMBOLS]
+            if hits:
+                reason = f"types/interfaces file with {len(hits)} diff symbols"
+                return 0.25, reason
+
+        return 0.0, ""
+
+                                                                                
+
+    def _test_proximity(
+        self,
+        candidate: str,
+        changed_files: list[str],
+    ) -> float:
+        """
+        Files that are imported by the test files covering the changed code
+        are almost always semantically load-bearing.  This signal is weaker
+        but useful as a tie-breaker.
+
+        We detect test files by filename pattern, find which non-test files
+        they import, and give credit if the candidate is in that set.
+        """
+        test_imports: set[str] = set()
+
+        for node in self.G.nodes():
+            is_test = (
+                "test" in node.lower()
+                or "spec" in node.lower()
+                or node.endswith("_test.go")
             )
+            if not is_test:
+                continue
 
-        base = min(1.0, total_in_diff / max(1, len(diff_symbols)) * 3.0)
-        max_hops = max((d.hop_distance for d in deps), default=1)
-        hop_boost = min(0.25, (max_hops - 1) * 0.08)
-        cb_count = sum(1 for d in deps if d.is_constraint_bearing)
-        cb_boost = min(0.20, cb_count * 0.07)
-        avg_centrality = sum(d.centrality for d in deps) / len(deps)
-        centrality_boost = min(0.15, avg_centrality * 2.0)
+                                                                   
+            imports_changed = any(
+                self.G.has_edge(node, cf) or self.G.has_edge(cf, node)
+                for cf in changed_files
+            )
+            if imports_changed:
+                test_imports.update(self.G.successors(node))
+                test_imports.update(self.G.predecessors(node))
 
-        return min(1.0, round(base + hop_boost + cb_boost + centrality_boost, 4))
+        return 1.0 if candidate in test_imports else 0.0
 
-    def _irr_go(self, deps: list[SymbolDependency]) -> float:
+                                                                                
+
+    def _compute_cfrd(
+        self,
+        all_task_files: list[str],                               
+    ) -> float:
         """
-        Go-specific irreducibility: based on interface count + structural weight.
+        CFRD(F) = (1 / n(n-1)) × Σ_{i≠j} ρ(fi, fj) · ι(fi, fj)
 
-        Go's coupling is behavioural not lexical — a file that defines
-        exported interfaces is always a hard dependency for anything that
-        implements or calls those interfaces, even if the interface name
-        doesn't literally appear in the diff text.
+        ρ(fi, fj)  = normalised shortest-path distance in the import graph
+                     between fi and fj.  Normalised by dividing by the
+                     graph diameter (max observed shortest path, capped at 5
+                     to handle disconnected nodes conservatively).
+
+        ι(fi, fj)  = interaction complexity = |shared_exclusive_symbols| /
+                     max(1, |exported(fi)| + |exported(fj)|)
+                     Measures how tightly coupled two files are via their
+                     shared exported symbol surface.
+
+        Returns 0.0 for fewer than 2 files.
         """
-        if not deps:
+        n = len(all_task_files)
+        if n < 2:
             return 0.0
 
-        interface_deps = []
-        struct_deps = []
-        for dep in deps:
-            ifaces = self._parser.get_interface_names(dep.file)
-            structs = self._parser.get_struct_names(dep.file)
-            if ifaces:
-                interface_deps.append(dep)
-            elif structs:
-                struct_deps.append(dep)
+                                           
+        exports: dict[str, set[str]] = {f: self._symbols(f) for f in all_task_files}
 
-        n_interface = len(interface_deps)
-        n_struct = len(struct_deps)
-        n_total = len(deps)
+                                                           
+        max_path = 1
+        for fi in all_task_files:
+            for fj in all_task_files:
+                if fi == fj or not self.G.has_node(fi) or not self.G.has_node(fj):
+                    continue
+                try:
+                    d = nx.shortest_path_length(self.G, fi, fj)
+                    max_path = max(max_path, d)
+                except nx.NetworkXNoPath:
+                    pass
+        diameter = max(1, min(max_path, 5))
 
-        # Base: interface files are strong constraints; struct files are moderate
-        base = min(0.55, n_interface * 0.18 + n_struct * 0.07)
+        total = 0.0
+        pairs = 0
+        for i, fi in enumerate(all_task_files):
+            for fj in all_task_files[i + 1:]:
+                pairs += 1
 
-        # Centrality: high-centrality deps are more architecturally load-bearing
-        avg_centrality = sum(d.centrality for d in deps) / max(1, n_total)
-        centrality_boost = min(0.25, avg_centrality * 2.5)
+                                             
+                rho = 0.0
+                if self.G.has_node(fi) and self.G.has_node(fj):
+                    try:
+                        d = nx.shortest_path_length(self.G, fi, fj)
+                        rho = d / diameter
+                    except nx.NetworkXNoPath:
+                        rho = 1.0                               
 
-        # Scale: more required files = more coupling
-        scale_boost = min(0.20, n_total * 0.035)
+                                                                        
+                sym_i = exports.get(fi, set())
+                sym_j = exports.get(fj, set())
+                shared = sym_i & sym_j - NOISE_SYMBOLS
+                denom = max(1, len(sym_i) + len(sym_j))
+                iota = len(shared) / denom * 2                                   
 
-        # Symbol overlap still contributes as a secondary signal
-        symbol_boost = min(0.15, sum(len(d.symbols_used) for d in deps) * 0.01)
+                total += rho * iota
 
-        return min(1.0, round(base + centrality_boost + scale_boost + symbol_boost, 4))
+        if pairs == 0:
+            return 0.0
+                                                                           
+        return round(min(1.0, total / pairs), 4)
 
-    # ── Public API ────────────────────────────────────────────────────────────
+                                                                                
+
+    def _compute_rfs(
+        self,
+        required_details: list[SignalBreakdown],
+        diff_symbols: set[str],
+        changed_files: list[str],
+        cfrd: float,
+    ) -> float:
+        """
+        RFS = 0.30×depth + 0.25×iface + 0.20×breadth
+            + 0.15×locality_deficit + 0.10×CFRD
+        """
+        if not required_details:
+            return 0.0
+
+        avg_hops = sum(d.hop_distance for d in required_details) / len(required_details)
+        depth = min(1.0, (avg_hops - 1) / 4.0)
+
+        iface_count = sum(1 for d in required_details if d.structural_score > 0.0)
+        iface = min(1.0, iface_count / 5.0)
+
+        breadth = min(1.0, len(required_details) / 8.0)
+
+        local_syms: set[str] = set()
+        for cf in changed_files:
+            local_syms.update(self._symbols(cf))
+        external_count = sum(1 for s in diff_symbols if s not in local_syms)
+        locality_deficit = external_count / max(1, len(diff_symbols))
+
+        rfs = (W_DEPTH * depth + W_IFACE * iface + W_BREADTH * breadth
+               + W_LOCAL * locality_deficit + W_CFRD * cfrd)
+        return round(min(1.0, rfs), 4)
+
+                                                                                
 
     def analyze(
         self,
@@ -504,30 +492,92 @@ class ContextDependencyMapper:
         diff_text: str,
         min_irr: float = 0.20,
     ) -> ContextDependencyMap:
-        diff_symbols = _symbols_from_diff(diff_text, self._min_len)
-        annotation_symbols = _annotation_symbols_from_diff(diff_text)
+        """
+        Run multi-signal analysis and return a ContextDependencyMap.
+        """
+        diff_symbols = _extract_diff_symbols(diff_text, self._min_sym_len)
+        annotation_symbols = _extract_annotation_symbols(diff_text)
 
-        syntactic = self._stage1_syntactic_deps(changed_files)
-        semantic = self._stage2_semantic_filter(syntactic, diff_symbols, changed_files)
-        enriched = self._stage3_constraint_bearing(semantic, annotation_symbols)
+                                                                                 
+                                                 
+        changed_set = set(changed_files)
+        candidates: set[str] = set()
+        for cf in changed_files:
+            if not self.G.has_node(cf):
+                continue
+            for depth in range(1, 4):
+                for _, node in nx.bfs_edges(self.G, cf, depth_limit=depth):
+                    if node not in changed_set:
+                        candidates.add(node)
 
-        # Keep all enriched deps — remove the >= 2 symbol filter that was
-        # dropping valid single-constraint deps
-        final_deps = enriched if enriched else semantic
+                                                   
+        details: list[SignalBreakdown] = []
+        for candidate in candidates:
+            imp_score, hops = self._import_score(changed_files, candidate)
+            if imp_score == 0.0:
+                continue                                  
 
-        irr_score = self._stage4_irreducibility(final_deps, diff_symbols, changed_files)
-        required_files = [d.file for d in final_deps]
-        max_hops = max((d.hop_distance for d in final_deps), default=0)
-        cb_files = [d.file for d in final_deps if d.is_constraint_bearing]
-        ct_found = list({d.constraint_type for d in final_deps if d.constraint_type})
+            typ_score, excl_syms = self._type_score(
+                candidate, diff_symbols, changed_files, annotation_symbols
+            )
+            str_score, str_reason = self._structural_score(
+                candidate, diff_symbols, changed_files
+            )
+            tst_score = self._test_proximity(candidate, changed_files)
+
+            rcs = (W_IMPORT * imp_score + W_TYPE * typ_score +
+                   W_STRUCTURAL * str_score + W_TEST * tst_score)
+
+            if rcs < RELEVANCE_THRESHOLD:
+                continue
+
+            details.append(SignalBreakdown(
+                file=candidate,
+                import_score=imp_score,
+                type_score=typ_score,
+                structural_score=str_score,
+                test_proximity=tst_score,
+                rcs=round(rcs, 4),
+                hop_distance=hops,
+                exclusive_symbols=excl_syms,
+                structural_reason=str_reason,
+            ))
+
+                                 
+        details.sort(key=lambda d: d.rcs, reverse=True)
+        required_files = [d.file for d in details]
+
+                                                       
+        rcs_sum = sum(d.rcs for d in details)
+        irr = round(math.tanh(2.5 * rcs_sum / max(1, len(details))), 4) if details else 0.0
+
+                                                                  
+        max_hops = max((d.hop_distance for d in details), default=0)
+
+                                                                             
+        all_task_files = list(set(changed_files) | set(required_files))
+        cfrd = self._compute_cfrd(all_task_files)
+
+                                            
+        rfs = self._compute_rfs(details, diff_symbols, changed_files, cfrd)
+
+                                                                 
+        cb_files = [d.file for d in details if d.structural_score > 0.0]
+        ct_found = list({
+            ("interface" if "interface" in d.structural_reason else
+             "type_file" if "types" in d.structural_reason else
+             "cross_file_method")
+            for d in details if d.structural_reason
+        })
 
         return ContextDependencyMap(
             changed_files=changed_files,
             required_context_files=required_files,
-            required_context_details=final_deps,
+            signal_details=details,
             context_distance_hops=max_hops,
-            irreducibility_score=irr_score,
-            symbol_dependencies=final_deps,
+            irreducibility_score=irr,
+            rfs=rfs,
+            cfrd=cfrd,
             constraint_bearing_files=cb_files,
-            constraint_types_found=ct_found,
+            constraint_types=ct_found,
         )
