@@ -1,0 +1,143 @@
+EVAL_RESULT: {
+  "taskId": "gin-003",
+  "difficultyLevel": "hard",
+  "difficultyScore": 0.72,
+  "taskCategory": "bug_investigation",
+  "language": "go",
+  "contextDistanceHops": 1,
+  "irreducibilityScore": 0.43,
+  "requiredContextFiles": [
+    "internal/bytesconv/bytesconv_1.20.go"
+  ],
+  "changedFiles": [
+    "context.go",
+    "gin.go",
+    "tree.go"
+  ],
+  "constraintTypes": [
+    "algorithm",
+    "memory_layout"
+  ],
+  "repoId": "gin",
+  "commitSha": "3fe928994b7ba7ed16b0c5114ca82a9dafa7a974",
+  "timestamp": "2026-03-31T15:34:57.506Z",
+  "assertDurationMs": 22,
+  "retrievalSuccess": false,
+  "retrievalRate": 0,
+  "retrievalResults": [
+    {
+      "file": "internal/bytesconv/bytesconv_1.20.go",
+      "retrieved": false,
+      "readCount": 0
+    }
+  ],
+  "requiredContextReadBeforeEdit": false,
+  "agentModifiedAny": false,
+  "allFilesModified": false,
+  "modifiedFileCount": 0,
+  "trivialFileCount": 0,
+  "unmodifiedExpectedFiles": [
+    "context.go",
+    "gin.go",
+    "tree.go"
+  ],
+  "unexpectedWrites": [],
+  "hasTrivialWrites": false,
+  "taskSuccess": false,
+  "cpcScore": 0.4,
+  "cpcResults": [
+    {
+      "id": "skipped_node_struct",
+      "description": "Must define skippedNode struct to hold backtracking state",
+      "satisfied": false,
+      "inconclusive": false,
+      "checkedIn": [
+        "context.go",
+        "gin.go",
+        "tree.go"
+      ]
+    },
+    {
+      "id": "count_sections",
+      "description": "Must add countSections function to track maximum path depth",
+      "satisfied": false,
+      "inconclusive": false,
+      "checkedIn": [
+        "context.go",
+        "gin.go",
+        "tree.go"
+      ]
+    },
+    {
+      "id": "bytesconv_usage",
+      "description": "countSections must use the zero-copy bytesconv.StringToBytes conversion",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "context.go",
+        "gin.go",
+        "tree.go"
+      ]
+    },
+    {
+      "id": "stack_backtracking",
+      "description": "getValue must use the skippedNodes stack instead of a single latestNode pointer",
+      "satisfied": false,
+      "inconclusive": false,
+      "checkedIn": [
+        "context.go",
+        "gin.go",
+        "tree.go"
+      ]
+    },
+    {
+      "id": "params_count_preservation",
+      "description": "skippedNode must record parameter count to correctly restore params on backtrack",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "context.go",
+        "gin.go",
+        "tree.go"
+      ]
+    }
+  ],
+  "dtaScore": 0,
+  "icuScore": 0,
+  "failureMode": "timeout",
+  "symbolResults": [
+    {
+      "symbol": "skippedNode",
+      "found": false,
+      "inconclusive": true
+    },
+    {
+      "symbol": "skippedNodes",
+      "found": false,
+      "inconclusive": true
+    },
+    {
+      "symbol": "countSections",
+      "found": false,
+      "inconclusive": true
+    },
+    {
+      "symbol": "StringToBytes",
+      "found": true,
+      "inconclusive": true
+    },
+    {
+      "symbol": "maxSections",
+      "found": false,
+      "inconclusive": true
+    }
+  ],
+  "toolCallCount": 0,
+  "totalReadPaths": 0,
+  "uniqueReadPaths": 0,
+  "operationSequenceSummary": [],
+  "runTimedOut": true,
+  "runErrorMessage": "Error: Process timed out after 300000ms.\nStdout:\n\nStderr:\nTimeout of 30000 exceeds the interval of 10000. Clamping timeout to interval duration.\nThe 'metricReader' option is deprecated. Please use 'metricReaders' instead.\nYOLO mode is enabled. All tool calls will be automatically approved.\nYOLO mode is enabled. All tool calls will be automatically approved.\nFile /home/nasa/.cache/vscode-ripgrep/ripgrep-v13.0.0-10-x86_64-unknown-linux-musl.tar.gz has been cached\n[STARTUP] Phase 'cleanup_ops' was started but never ended. Skipping metrics.\n[STARTUP] Cannot measure phase 'cleanup_ops': start mark 'startup:cleanup_ops:start' not found (likely cleared by reset).\nAttempt 1 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\"status\":\"RESOURCE_EXHAUSTED\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35582:7\n    at async Models.generateContent (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36641:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276721:26\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async BaseLlmClient._generateWithRetry (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273981:14)\n    at async BaseLlmClient.generateJson (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273888:21)\n    at async NumericalClassifierStrategy.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319165:28) {\n  status: 429\n}\nAttempt 2 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\"status\":\"RESOURCE_EXHAUSTED\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35582:7\n    at async Models.generateContent (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36641:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276721:26\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async BaseLlmClient._generateWithRetry (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273981:14)\n    at async BaseLlmClient.generateJson (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273888:21)\n    at async NumericalClassifierStrategy.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319165:28) {\n  status: 429\n}\nAttempt 3 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\"status\":\"RESOURCE_EXHAUSTED\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35582:7\n    at async Models.generateContent (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36641:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276721:26\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async BaseLlmClient._generateWithRetry (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273981:14)\n    at async BaseLlmClient.generateJson (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273888:21)\n    at async NumericalClassifierStrategy.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319165:28) {\n  status: 429\n}\nAttempt 4 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \",\"status\":\"RESOURCE_EXHAUSTED\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35582:7\n    at async Models.generateContent (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36641:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276721:26\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async BaseLlmClient._generateWithRetry (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273981:14)\n    at async BaseLlmClient.generateJson (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273888:21)\n    at async NumericalClassifierStrategy.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319165:28) {\n  status: 429\n}\nAttempt 5 failed: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. . Max attempts reached\nError generating content via API. Full report available at: /tmp/gemini-client-error-generateJson-api-2026-03-31T15-31-19-885Z.json RetryableQuotaError: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n    at classifyGoogleError (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273115:14)\n    at retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273747:31)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async BaseLlmClient._generateWithRetry (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273981:14)\n    at async BaseLlmClient.generateJson (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273888:21)\n    at async NumericalClassifierStrategy.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319165:28)\n    at async CompositeStrategy.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319229:26)\n    at async ModelRouterService.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319390:18)\n    at async GeminiClient.processTurn (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:312837:24)\n    at async GeminiClient.sendMessageStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:312969:14) {\n  cause: {\n    code: 429,\n    message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. ',\n    details: []\n  },\n  retryDelayMs: undefined\n}\n[Routing] NumericalClassifierStrategy failed: Error: Failed to generate content: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n    at BaseLlmClient._generateWithRetry (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:274011:13)\n    at async BaseLlmClient.generateJson (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273888:21)\n    at async NumericalClassifierStrategy.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319165:28)\n    at async CompositeStrategy.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319229:26)\n    at async ModelRouterService.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319390:18)\n    at async GeminiClient.processTurn (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:312837:24)\n    at async GeminiClient.sendMessageStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:312969:14)\n    at async file:///home/nasa/gemini-cli/bundle/gemini-HXCYWMUH.js:9681:26\n    at async main (file:///home/nasa/gemini-cli/bundle/gemini-HXCYWMUH.js:14349:5)\nAttempt 1 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"message\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\\": 429,\\n    \\\"message\\\": \\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\",\\n    \\\"status\\\": \\\"RESOURCE_EXHAUSTED\\\"\\n  }\\n}\\n\",\"code\":429,\"status\":\"Too Many Requests\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35594:7\n    at async Models.generateContentStream (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36690:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276764:19\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24) {\n  status: 429\n}\nAttempt 2 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"message\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\\": 429,\\n    \\\"message\\\": \\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\",\\n    \\\"status\\\": \\\"RESOURCE_EXHAUSTED\\\"\\n  }\\n}\\n\",\"code\":429,\"status\":\"Too Many Requests\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35594:7\n    at async Models.generateContentStream (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36690:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276764:19\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24) {\n  status: 429\n}\nAttempt 3 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"message\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\\": 429,\\n    \\\"message\\\": \\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\",\\n    \\\"status\\\": \\\"RESOURCE_EXHAUSTED\\\"\\n  }\\n}\\n\",\"code\":429,\"status\":\"Too Many Requests\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35594:7\n    at async Models.generateContentStream (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36690:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276764:19\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24) {\n  status: 429\n}\nAttempt 4 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"message\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\\": 429,\\n    \\\"message\\\": \\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\",\\n    \\\"status\\\": \\\"RESOURCE_EXHAUSTED\\\"\\n  }\\n}\\n\",\"code\":429,\"status\":\"Too Many Requests\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35594:7\n    at async Models.generateContentStream (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36690:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276764:19\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24) {\n  status: 429\n}\nAttempt 5 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"message\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\\": 429,\\n    \\\"message\\\": \\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\",\\n    \\\"status\\\": \\\"RESOURCE_EXHAUSTED\\\"\\n  }\\n}\\n\",\"code\":429,\"status\":\"Too Many Requests\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35594:7\n    at async Models.generateContentStream (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36690:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276764:19\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24) {\n  status: 429\n}\nAttempt 6 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"message\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\\": 429,\\n    \\\"message\\\": \\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\",\\n    \\\"status\\\": \\\"RESOURCE_EXHAUSTED\\\"\\n  }\\n}\\n\",\"code\":429,\"status\":\"Too Many Requests\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35594:7\n    at async Models.generateContentStream (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36690:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276764:19\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24) {\n  status: 429\n}\nAttempt 7 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"message\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\\": 429,\\n    \\\"message\\\": \\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\",\\n    \\\"status\\\": \\\"RESOURCE_EXHAUSTED\\\"\\n  }\\n}\\n\",\"code\":429,\"status\":\"Too Many Requests\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35594:7\n    at async Models.generateContentStream (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36690:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276764:19\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24) {\n  status: 429\n}\nAttempt 8 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"message\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\\": 429,\\n    \\\"message\\\": \\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\",\\n    \\\"status\\\": \\\"RESOURCE_EXHAUSTED\\\"\\n  }\\n}\\n\",\"code\":429,\"status\":\"Too Many Requests\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35594:7\n    at async Models.generateContentStream (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36690:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276764:19\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24) {\n  status: 429\n}\nAttempt 9 failed with status 429. Retrying with backoff... _ApiError: {\"error\":{\"message\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\\": 429,\\n    \\\"message\\\": \\\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\",\\n    \\\"status\\\": \\\"RESOURCE_EXHAUSTED\\\"\\n  }\\n}\\n\",\"code\":429,\"status\":\"Too Many Requests\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35594:7\n    at async Models.generateContentStream (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36690:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276764:19\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24) {\n  status: 429\n}\n",
+  "resultLength": 0
+}
+

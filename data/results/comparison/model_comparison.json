@@ -1,0 +1,27 @@
+{
+  "generated": "2026-03-31T16:36:41.701010",
+  "models": [
+    {
+      "model": "gemini-2.5-flash",
+      "run_date": "2026-03-31",
+      "n_tasks": 3,
+      "pass_rate": 0.0,
+      "avg_icu": 0.3333,
+      "avg_ccs": 0.3333,
+      "avg_pes": 0.7593,
+      "avg_ter": 0.0185,
+      "icu_gap": -0.3333
+    },
+    {
+      "model": "gemini-2.5-flash-lite",
+      "run_date": "2026-03-31",
+      "n_tasks": 6,
+      "pass_rate": 0.0,
+      "avg_icu": 0.1667,
+      "avg_ccs": 0.1667,
+      "avg_pes": 0.4921,
+      "avg_ter": 0.0238,
+      "icu_gap": -0.1667
+    }
+  ]
+}

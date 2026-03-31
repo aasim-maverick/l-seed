@@ -1,0 +1,143 @@
+EVAL_RESULT: {
+  "taskId": "ts-001",
+  "difficultyLevel": "medium",
+  "difficultyScore": 0.52,
+  "taskCategory": "bug_investigation",
+  "language": "typescript",
+  "contextDistanceHops": 1,
+  "irreducibilityScore": 1,
+  "requiredContextFiles": [
+    "src/compiler/types.ts"
+  ],
+  "changedFiles": [
+    "src/compiler/checker.ts",
+    "src/compiler/utilities.ts"
+  ],
+  "constraintTypes": [
+    "ast_node_type",
+    "assignment_semantics"
+  ],
+  "repoId": "typescript",
+  "commitSha": "d6171b9d0b0020b383ae3b552724380a7a0b3cdc",
+  "timestamp": "2026-03-31T15:42:45.415Z",
+  "assertDurationMs": 72,
+  "retrievalSuccess": false,
+  "retrievalRate": 0,
+  "retrievalResults": [
+    {
+      "file": "src/compiler/types.ts",
+      "retrieved": false,
+      "readCount": 0
+    }
+  ],
+  "requiredContextReadBeforeEdit": false,
+  "agentModifiedAny": false,
+  "allFilesModified": false,
+  "modifiedFileCount": 0,
+  "trivialFileCount": 0,
+  "unmodifiedExpectedFiles": [
+    "src/compiler/checker.ts",
+    "src/compiler/utilities.ts"
+  ],
+  "unexpectedWrites": [],
+  "hasTrivialWrites": false,
+  "taskSuccess": false,
+  "cpcScore": 0.6666666666666666,
+  "cpcResults": [
+    {
+      "id": "checker_predicate",
+      "description": "checker.ts must use isAssignmentExpression instead of manual SyntaxKind.EqualsToken check",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "src/compiler/checker.ts",
+        "src/compiler/utilities.ts"
+      ]
+    },
+    {
+      "id": "utilities_predicate",
+      "description": "utilities.ts getNextJSDocCommentLocation must also use isAssignmentExpression",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "src/compiler/checker.ts",
+        "src/compiler/utilities.ts"
+      ]
+    },
+    {
+      "id": "target_narrowing",
+      "description": "After isAssignmentExpression check, target extraction must use parent.left directly without casting",
+      "satisfied": false,
+      "inconclusive": false,
+      "checkedIn": [
+        "src/compiler/checker.ts",
+        "src/compiler/utilities.ts"
+      ]
+    }
+  ],
+  "dtaScore": 0,
+  "icuScore": 0,
+  "failureMode": "timeout",
+  "symbolResults": [
+    {
+      "symbol": "isAssignmentExpression",
+      "found": true,
+      "inconclusive": true
+    },
+    {
+      "symbol": "BinaryExpression",
+      "found": true,
+      "inconclusive": true
+    },
+    {
+      "symbol": "SyntaxKind",
+      "found": true,
+      "inconclusive": true
+    },
+    {
+      "symbol": "EqualsToken",
+      "found": true,
+      "inconclusive": true
+    }
+  ],
+  "toolCallCount": 21,
+  "totalReadPaths": 6,
+  "uniqueReadPaths": 2,
+  "operationSequenceSummary": [
+    {
+      "op": "read",
+      "file": "src/compiler/checker.ts",
+      "idx": 7
+    },
+    {
+      "op": "read",
+      "file": "src/compiler/checker.ts",
+      "idx": 8
+    },
+    {
+      "op": "read",
+      "file": "src/compiler/utilities.ts",
+      "idx": 9
+    },
+    {
+      "op": "read",
+      "file": "src/compiler/checker.ts",
+      "idx": 11
+    },
+    {
+      "op": "read",
+      "file": "src/compiler/checker.ts",
+      "idx": 12
+    },
+    {
+      "op": "read",
+      "file": "src/compiler/checker.ts",
+      "idx": 16
+    }
+  ],
+  "runTimedOut": true,
+  "runErrorMessage": "Error: Process exited with code 1:\nTimeout of 30000 exceeds the interval of 10000. Clamping timeout to interval duration.\nThe 'metricReader' option is deprecated. Please use 'metricReaders' instead.\nYOLO mode is enabled. All tool calls will be automatically approved.\nYOLO mode is enabled. All tool calls will be automatically approved.\nFile /home/nasa/.cache/vscode-ripgrep/ripgrep-v13.0.0-10-x86_64-unknown-linux-musl.tar.gz has been cached\n[STARTUP] Phase 'cleanup_ops' was started but never ended. Skipping metrics.\n[STARTUP] Cannot measure phase 'cleanup_ops': start mark 'startup:cleanup_ops:start' not found (likely cleared by reset).\nAttempt 1 failed with status 503. Retrying with backoff... _ApiError: {\"error\":{\"code\":503,\"message\":\"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\"status\":\"UNAVAILABLE\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35582:7\n    at async Models.generateContent (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36641:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276721:26\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async BaseLlmClient._generateWithRetry (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273981:14)\n    at async BaseLlmClient.generateJson (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273888:21)\n    at async NumericalClassifierStrategy.route (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:319165:28) {\n  status: 503\n}\nAttempt 1 failed: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3-flash\nPlease retry in 57.434591969s.\nSuggested retry after 57s.. Retrying after 64227ms...\nAttempt 1 failed: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3-flash\nPlease retry in 25.021647244s.\nSuggested retry after 25s.. Retrying after 27257ms...\nAttempt 1 failed: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3-flash\nPlease retry in 29.299741532s.\nSuggested retry after 29s.. Retrying after 32713ms...\nAttempt 1 failed with status 503. Retrying with backoff... _ApiError: {\"error\":{\"message\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\\": 503,\\n    \\\"message\\\": \\\"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\\\",\\n    \\\"status\\\": \\\"UNAVAILABLE\\\"\\n  }\\n}\\n\",\"code\":503,\"status\":\"Service Unavailable\"}}\n    at throwErrorIfNotOK (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35831:24)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:35594:7\n    at async Models.generateContentStream (file:///home/nasa/gemini-cli/bundle/chunk-EWFGVP62.js:36690:16)\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:276764:19\n    at async file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:253810:23\n    at async retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273726:23)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24) {\n  status: 503\n}\nError when talking to Gemini API Full report available at: /tmp/gemini-client-error-Turn.run-sendMessageStream-2026-03-31T15-42-45-311Z.json TerminalQuotaError: You have exhausted your daily quota on this model.\n    at classifyGoogleError (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273130:16)\n    at retryWithBackoff (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:273747:31)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async GeminiChat.makeApiCallAndProcessStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308810:28)\n    at async GeminiChat.streamWithRetries (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:308655:29)\n    at async Turn.run (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:309140:24)\n    at async GeminiClient.processTurn (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:312856:22)\n    at async GeminiClient.sendMessageStream (file:///home/nasa/gemini-cli/bundle/chunk-6YMZZLUE.js:312969:14)\n    at async file:///home/nasa/gemini-cli/bundle/gemini-HXCYWMUH.js:9681:26\n    at async main (file:///home/nasa/gemini-cli/bundle/gemini-HXCYWMUH.js:14349:5) {\n  cause: {\n    code: 429,\n    message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n' +\n      '* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3-flash\\n' +\n      'Please retry in 14.744111689s.',\n    details: [ [Object], [Object], [Object] ]\n  },\n  retryDelayMs: undefined,\n  reason: undefined\n}\nAn unexpected critical error occurred:[object Object]\n",
+  "resultLength": 0
+}
+
+

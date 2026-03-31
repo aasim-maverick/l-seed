@@ -1,0 +1,138 @@
+EVAL_RESULT: {
+  "taskId": "flask-002",
+  "difficultyLevel": "easy",
+  "difficultyScore": 0.28,
+  "taskCategory": "feature_implementation",
+  "language": "python",
+  "contextDistanceHops": 1,
+  "irreducibilityScore": 0.2,
+  "requiredContextFiles": [
+    "src/flask/globals.py"
+  ],
+  "changedFiles": [
+    "src/flask/app.py",
+    "src/flask/wrappers.py"
+  ],
+  "constraintTypes": [
+    "proxy_architecture",
+    "config_fallback"
+  ],
+  "repoId": "flask",
+  "commitSha": "6f2014d353d514e404c1f40e8f0a24e2bf62b941",
+  "timestamp": "2026-03-31T15:50:29.367Z",
+  "assertDurationMs": 20,
+  "retrievalSuccess": false,
+  "retrievalRate": 0,
+  "retrievalResults": [
+    {
+      "file": "src/flask/globals.py",
+      "retrieved": false,
+      "readCount": 0
+    }
+  ],
+  "requiredContextReadBeforeEdit": false,
+  "agentModifiedAny": true,
+  "allFilesModified": true,
+  "modifiedFileCount": 2,
+  "trivialFileCount": 0,
+  "unmodifiedExpectedFiles": [],
+  "unexpectedWrites": [],
+  "hasTrivialWrites": false,
+  "taskSuccess": false,
+  "cpcScore": 1,
+  "cpcResults": [
+    {
+      "id": "config_defaults",
+      "description": "Config key must be added to Flask default config in app.py",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "src/flask/app.py",
+        "src/flask/wrappers.py"
+      ]
+    },
+    {
+      "id": "property_getter",
+      "description": "max_form_memory_size and max_form_parts must be implemented as properties",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "src/flask/app.py",
+        "src/flask/wrappers.py"
+      ]
+    },
+    {
+      "id": "app_context_guard",
+      "description": "Properties must check current_app to distinguish in-context from out-of-context",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "src/flask/app.py",
+        "src/flask/wrappers.py"
+      ]
+    },
+    {
+      "id": "werkzeug_fallback",
+      "description": "Must fall back to Werkzeug base class defaults when outside app context",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "src/flask/app.py",
+        "src/flask/wrappers.py"
+      ]
+    }
+  ],
+  "dtaScore": 0,
+  "icuScore": 0,
+  "failureMode": "context_substitution",
+  "symbolResults": [
+    {
+      "symbol": "current_app",
+      "found": true,
+      "inconclusive": false
+    },
+    {
+      "symbol": "MAX_FORM_MEMORY_SIZE",
+      "found": true,
+      "inconclusive": false
+    },
+    {
+      "symbol": "MAX_FORM_PARTS",
+      "found": true,
+      "inconclusive": false
+    },
+    {
+      "symbol": "super",
+      "found": true,
+      "inconclusive": false
+    }
+  ],
+  "toolCallCount": 4,
+  "totalReadPaths": 2,
+  "uniqueReadPaths": 2,
+  "operationSequenceSummary": [
+    {
+      "op": "read",
+      "file": "src/flask/app.py",
+      "idx": 0
+    },
+    {
+      "op": "write",
+      "file": "src/flask/app.py",
+      "idx": 1
+    },
+    {
+      "op": "read",
+      "file": "src/flask/wrappers.py",
+      "idx": 2
+    },
+    {
+      "op": "write",
+      "file": "src/flask/wrappers.py",
+      "idx": 3
+    }
+  ],
+  "runTimedOut": false,
+  "resultLength": 999
+}
+

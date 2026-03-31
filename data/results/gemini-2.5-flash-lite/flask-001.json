@@ -1,0 +1,129 @@
+EVAL_RESULT: {
+  "taskId": "flask-001",
+  "difficultyLevel": "medium",
+  "difficultyScore": 0.58,
+  "taskCategory": "bug_investigation",
+  "language": "python",
+  "contextDistanceHops": 2,
+  "irreducibilityScore": 0.74,
+  "requiredContextFiles": [
+    "src/flask/globals.py"
+  ],
+  "changedFiles": [
+    "src/flask/app.py",
+    "src/flask/ctx.py",
+    "src/flask/sessions.py",
+    "src/flask/templating.py"
+  ],
+  "constraintTypes": [
+    "proxy_architecture",
+    "security_invariant"
+  ],
+  "repoId": "flask",
+  "commitSha": "c17f379390731543eea33a570a47bd4ef76a54fa",
+  "timestamp": "2026-03-30T13:23:40.878Z",
+  "assertDurationMs": 10,
+  "retrievalSuccess": false,
+  "retrievalRate": 0,
+  "retrievalResults": [
+    {
+      "file": "src/flask/globals.py",
+      "retrieved": false,
+      "readCount": 0
+    }
+  ],
+  "requiredContextReadBeforeEdit": false,
+  "agentModifiedAny": true,
+  "allFilesModified": false,
+  "modifiedFileCount": 1,
+  "trivialFileCount": 0,
+  "unmodifiedExpectedFiles": [
+    "src/flask/app.py",
+    "src/flask/ctx.py",
+    "src/flask/templating.py"
+  ],
+  "unexpectedWrites": [],
+  "hasTrivialWrites": false,
+  "taskSuccess": false,
+  "cpcScore": 1,
+  "cpcResults": [
+    {
+      "id": "property_accessor",
+      "description": "session must become a property in RequestContext",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "src/flask/app.py",
+        "src/flask/ctx.py",
+        "src/flask/sessions.py",
+        "src/flask/templating.py"
+      ]
+    },
+    {
+      "id": "internal_reference",
+      "description": "internal references must use _session to avoid infinite recursion through the property",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "src/flask/app.py",
+        "src/flask/ctx.py",
+        "src/flask/sessions.py",
+        "src/flask/templating.py"
+      ]
+    },
+    {
+      "id": "accessed_flag",
+      "description": "accessed must be set in the property, not in session methods",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "src/flask/app.py",
+        "src/flask/ctx.py",
+        "src/flask/sessions.py",
+        "src/flask/templating.py"
+      ]
+    }
+  ],
+  "dtaScore": 0,
+  "icuScore": 0,
+  "failureMode": "context_substitution",
+  "symbolResults": [
+    {
+      "symbol": "LocalProxy",
+      "found": false,
+      "inconclusive": false
+    },
+    {
+      "symbol": "accessed",
+      "found": true,
+      "inconclusive": false
+    },
+    {
+      "symbol": "_session",
+      "found": true,
+      "inconclusive": false
+    },
+    {
+      "symbol": "RequestContext",
+      "found": true,
+      "inconclusive": false
+    }
+  ],
+  "toolCallCount": 2,
+  "totalReadPaths": 1,
+  "uniqueReadPaths": 1,
+  "operationSequenceSummary": [
+    {
+      "op": "read",
+      "file": "src/flask/sessions.py",
+      "idx": 0
+    },
+    {
+      "op": "write",
+      "file": "src/flask/sessions.py",
+      "idx": 1
+    }
+  ],
+  "resultLength": 1054
+}
+

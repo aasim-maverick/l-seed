@@ -1,0 +1,124 @@
+EVAL_RESULT: {
+  "taskId": "gin-002",
+  "difficultyLevel": "medium",
+  "difficultyScore": 0.45,
+  "taskCategory": "feature_implementation",
+  "language": "go",
+  "contextDistanceHops": 1,
+  "irreducibilityScore": 0.35,
+  "requiredContextFiles": [
+    "routergroup.go"
+  ],
+  "changedFiles": [
+    "context.go",
+    "gin.go"
+  ],
+  "constraintTypes": [
+    "struct_embedding",
+    "feature_flag"
+  ],
+  "repoId": "gin",
+  "commitSha": "f197a8bae0c87e1b7cc2e32e399a40665a82f077",
+  "timestamp": "2026-03-30T15:37:14.233Z",
+  "assertDurationMs": 77,
+  "retrievalSuccess": false,
+  "retrievalRate": 0,
+  "retrievalResults": [
+    {
+      "file": "routergroup.go",
+      "retrieved": false,
+      "readCount": 0
+    }
+  ],
+  "requiredContextReadBeforeEdit": false,
+  "agentModifiedAny": true,
+  "allFilesModified": false,
+  "modifiedFileCount": 1,
+  "trivialFileCount": 0,
+  "unmodifiedExpectedFiles": [
+    "context.go"
+  ],
+  "unexpectedWrites": [],
+  "hasTrivialWrites": false,
+  "taskSuccess": false,
+  "cpcScore": 0.3333333333333333,
+  "cpcResults": [
+    {
+      "id": "engine_field",
+      "description": "ContextWithFallback bool field must be added to Engine struct",
+      "satisfied": true,
+      "inconclusive": false,
+      "checkedIn": [
+        "context.go",
+        "gin.go"
+      ]
+    },
+    {
+      "id": "deadline_guard",
+      "description": "All four context methods must check c.engine.ContextWithFallback before delegating",
+      "satisfied": false,
+      "inconclusive": false,
+      "checkedIn": [
+        "context.go",
+        "gin.go"
+      ]
+    },
+    {
+      "id": "request_context_delegation",
+      "description": "When flag is set, methods must delegate to the HTTP request's context",
+      "satisfied": false,
+      "inconclusive": false,
+      "checkedIn": [
+        "context.go",
+        "gin.go"
+      ]
+    }
+  ],
+  "dtaScore": 0,
+  "icuScore": 0,
+  "failureMode": "context_substitution",
+  "symbolResults": [
+    {
+      "symbol": "ContextWithFallback",
+      "found": true,
+      "inconclusive": false
+    },
+    {
+      "symbol": "c.engine",
+      "found": true,
+      "inconclusive": false
+    },
+    {
+      "symbol": "c.Request.Context",
+      "found": false,
+      "inconclusive": false
+    }
+  ],
+  "toolCallCount": 15,
+  "totalReadPaths": 3,
+  "uniqueReadPaths": 2,
+  "operationSequenceSummary": [
+    {
+      "op": "read",
+      "file": "gin.go",
+      "idx": 1
+    },
+    {
+      "op": "write",
+      "file": "gin.go",
+      "idx": 2
+    },
+    {
+      "op": "read",
+      "file": "context.go",
+      "idx": 4
+    },
+    {
+      "op": "read",
+      "file": "context.go",
+      "idx": 12
+    }
+  ],
+  "resultLength": 2439
+}
+

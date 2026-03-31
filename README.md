@@ -25,6 +25,46 @@ Build a benchmark that verifies whether an agent can:
 4. Pipeline Integration: integrate this dataset into Gemini CLI eval and testing workflows.
 5. Baseline Analysis: publish baseline success rates and failure mode analysis for long context reasoning.
 
+## Current Progress Snapshot
+
+| Item | Value |
+|---|---:|
+| Repositories onboarded (pinned) | 3 |
+| Raw mined candidates | 190 |
+| Handcrafted validated tasks | 9 |
+
+| Model | Tasks Run | Pass Rate | Avg ICU | Avg CCS | Avg PES | Avg TER |
+|---|---:|---:|---:|---:|---:|---:|
+| `gemini-2.5-flash` | 3 | 0.000 | 0.333 | 0.333 | 0.759 | 0.018 |
+| `gemini-2.5-flash-lite` | 6 | 0.000 | 0.167 | 0.167 | 0.492 | 0.024 |
+| `gemini-2.5-pro` | - | - | - | - | - | - |
+| `gemini-3-flash-preview` | - | - | - | - | - | - |
+| `gemini-3.1-pro-preview` | - | - | - | - | - | - |
+
+Generated analysis artifacts:
+
+- `data/results/gemini-2.5-flash/2026-03-31_analysis.json`
+- `data/results/gemini-2.5-flash-lite/2026-03-31_analysis.json`
+- `data/results/comparison/model_comparison.json`
+- `data/results/figures/model_comparison.png`
+- `data/results/figures/per_task_metrics_gemini-2.5-flash.png`
+- `data/results/figures/per_task_metrics_gemini-2.5-flash-lite.png`
+- `data/results/figures/model_comparison.png`
+- `data/results/figures/icu_vs_rfs_gemini-2.5-flash.png`
+- `data/results/figures/icu_vs_rfs_gemini-2.5-flash-lite.png`
+- `data/results/figures/failure_dist_gemini-2.5-flash.png`
+- `data/results/figures/failure_dist_gemini-2.5-flash-lite.png`
+
+## Figures
+
+![Per-Task Metrics gemini-2.5-flash](data/results/figures/per_task_metrics_gemini-2.5-flash.png)
+![Per-Task Metrics gemini-2.5-flash-lite](data/results/figures/per_task_metrics_gemini-2.5-flash-lite.png)
+![Model Comparison](data/results/figures/model_comparison.png)
+![ICU vs RFS gemini-2.5-flash](data/results/figures/icu_vs_rfs_gemini-2.5-flash.png)
+![ICU vs RFS gemini-2.5-flash-lite](data/results/figures/icu_vs_rfs_gemini-2.5-flash-lite.png)
+![Failure Distribution gemini-2.5-flash](data/results/figures/failure_dist_gemini-2.5-flash.png)
+![Failure Distribution gemini-2.5-flash-lite](data/results/figures/failure_dist_gemini-2.5-flash-lite.png)
+
 ## Documentation Map
 
 | Document | Purpose |
