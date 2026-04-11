@@ -221,7 +221,7 @@ def validate_task(task_path: Path, strict: bool = False) -> bool:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Validate task JSON records for LongContext-Bench"
+        description="Validate task JSON records for L-SEED"
     )
     parser.add_argument("paths", nargs="+", help="Task JSON file(s) to validate")
     parser.add_argument("--strict", action="store_true",

@@ -231,7 +231,7 @@ class EvalGenerator:
     def __init__(self, gemini_cli_path: str | Path, repo_base: str | Path):
         self.gemini_cli_path = Path(gemini_cli_path)
         self.repo_base = Path(repo_base)
-        self.output_dir = self.gemini_cli_path / 'evals' / 'longcontext'
+        self.output_dir = self.gemini_cli_path / 'evals' / 'l-seed'
 
         template_dir = Path(__file__).parent / 'templates'
         self._env = _make_env(template_dir)

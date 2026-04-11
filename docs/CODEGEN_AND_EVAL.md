@@ -20,7 +20,7 @@ flowchart TD
     D --> E[optional symbol guided extraction]
     C --> F[Jinja render]
     E --> F
-    F --> G[write evals/longcontext/<task_id>.eval.ts]
+    F --> G[write evals/l-seed/<task_id>.eval.ts]
 ```
 
 ## File Loading Semantics
@@ -85,14 +85,14 @@ python3 codegen/run_codegen.py --dry-run
 By default generated files go to:
 
 ```text
-../gemini-cli/evals/longcontext/<task_id>.eval.ts
+../gemini-cli/evals/l-seed/<task_id>.eval.ts
 ```
 
 ## Type Check and Run
 
 ```bash
 cd ../gemini-cli
-npx tsc --noEmit evals/longcontext/*.eval.ts
+npx tsc --noEmit evals/l-seed/*.eval.ts
 ```
 
 Single eval run example:
@@ -100,8 +100,8 @@ Single eval run example:
 ```bash
 cd ../gemini-cli
 RUN_EVALS=1 GEMINI_MODEL=gemini-2.5-flash \
-LC_BENCH_LOG=../longcontext-bench/data/results/run1.jsonl \
-npx vitest run evals/longcontext/flask-001.eval.ts
+L_SEED_LOG=../<l-seed-repo>/data/results/run1.jsonl \
+npx vitest run evals/l-seed/flask-001.eval.ts
 ```
 
 ## Practical Notes

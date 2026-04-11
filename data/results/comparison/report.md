@@ -1,4 +1,4 @@
-# LongContext-Bench: Model Comparison
+# L-SEED: Model Comparison
 
 _Generated: 2026-03-31T16:36:41.701010_
 

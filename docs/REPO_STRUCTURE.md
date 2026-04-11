@@ -3,7 +3,7 @@
 Current high level structure:
 
 ```text
-longcontext-bench/
+l-seed/
   analysis/
     aggregator.py
     failure-taxonomy.py

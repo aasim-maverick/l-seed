@@ -2,7 +2,7 @@
 
 ## System Layers
 
-LongContext Bench is organized into five layers for a large scale dataset program:
+L-SEED is organized into five layers for a large scale dataset program:
 
 1. Repository curation and pinned snapshots
 2. CDM reasoning and dependency analysis

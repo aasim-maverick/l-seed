@@ -1,7 +1,7 @@
 """
 analysis/visualizer.py
 
-Produces figures from LongContext-Bench analysis JSON files.
+Produces figures from L-SEED analysis JSON files.
 
 Requires: matplotlib, seaborn, numpy.
 
@@ -212,7 +212,7 @@ def plot_model_comparison(analyses: list[dict], output_dir: Path) -> None:
     ax.set_xticklabels(labels)
     ax.set_ylim(0, 1.05)
     ax.set_ylabel("Score")
-    ax.set_title("Model Comparison — LongContext-Bench Metrics")
+    ax.set_title("Model Comparison — L-SEED Metrics")
     ax.legend()
     ax.axhline(y=0.5, color="gray", linestyle="--", alpha=0.3)
 

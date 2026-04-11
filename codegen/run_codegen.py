@@ -7,7 +7,7 @@ Usage:
     python codegen/run_codegen.py --tasks flask-001 gin-002  # specific tasks
 
 After generation:
-    cd ../gemini-cli && npx tsc --noEmit evals/longcontext/*.eval.ts
+    cd ../gemini-cli && npx tsc --noEmit evals/l-seed/*.eval.ts
 """
 
 from __future__ import annotations
@@ -55,11 +55,11 @@ def main() -> None:
     if generated and not args.dry_run:
         cli = Path(args.gemini_cli)
         print(f'\nType-check:')
-        print(f'  cd {cli} && npx tsc --noEmit evals/longcontext/*.eval.ts')
+        print(f'  cd {cli} && npx tsc --noEmit evals/l-seed/*.eval.ts')
         print(f'\nRun single task:')
         print(f'  cd {cli} && RUN_EVALS=1 GEMINI_MODEL=gemini-2.5-flash \\')
-        print(f'    LC_BENCH_LOG=../longcontext-bench/data/results/run1.jsonl \\')
-        print(f'    npx vitest run evals/longcontext/flask-001.eval.ts')
+        print(f'    L_SEED_LOG=../<l-seed-repo>/data/results/run1.jsonl \\')
+        print(f'    npx vitest run evals/l-seed/flask-001.eval.ts')
 
 
 if __name__ == '__main__':

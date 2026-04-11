@@ -63,15 +63,15 @@ python3 codegen/run_codegen.py --tasks flask-001 --gemini-cli ../gemini-cli
 
 Checkpoint:
 
-- eval file created in `../gemini-cli/evals/longcontext/`
+- eval file created in `../gemini-cli/evals/l-seed/`
 
 ## E) Run Evals
 
 ```bash
 cd ../gemini-cli
 RUN_EVALS=1 GEMINI_MODEL=<model> \
-LC_BENCH_LOG=../longcontext-bench/data/results/<model>/<date>_run.jsonl \
-npx vitest run evals/longcontext/*.eval.ts
+L_SEED_LOG=../<l-seed-repo>/data/results/<model>/<date>_run.jsonl \
+npx vitest run evals/l-seed/*.eval.ts
 ```
 
 Checkpoint:
@@ -81,7 +81,7 @@ Checkpoint:
 ## F) Analyze
 
 ```bash
-cd ../longcontext-bench
+cd ../<l-seed-repo>
 python3 analysis/aggregator.py \
   --input data/results/<model>/<date>_run.jsonl \
   --tasks data/tasks/validated \

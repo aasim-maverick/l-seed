@@ -1,4 +1,4 @@
-# LongContext Bench Documentation
+# L-SEED Documentation
 
 This repo is a prototype that defines a long context coding benchmark pipeline for Gemini CLI evaluation.
 
@@ -82,7 +82,7 @@ Generated analysis artifacts:
 ## Repository Structure
 
 ```text
-longcontext-bench/
+l-seed/
 ├── requirements.txt                          # Python dependencies
 ├── analysis/                                 # Evaluation metrics, aggregation, reporting, plotting
 │   ├── aggregator.py                         # Builds analysis JSON from JSONL run logs

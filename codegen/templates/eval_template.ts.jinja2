@@ -517,13 +517,13 @@ evalTest('USUALLY_PASSES', {
       resultLength: result.length,
     };
 
-    const logPath = process.env['LC_BENCH_LOG'];
+    const logPath = process.env['L_SEED_LOG'] ?? process.env['LC_BENCH_LOG'];
     if (logPath) {
       try {
         fs.mkdirSync(path.dirname(logPath), { recursive: true });
         fs.appendFileSync(logPath, JSON.stringify(logEntry) + '\n');
       } catch (e) {
-        process.stderr.write(`[LC_BENCH] Log write failed: ${String(e)}\n`);
+        process.stderr.write(`[L_SEED] Log write failed: ${String(e)}\n`);
       }
     } else {
       console.log('\nEVAL_RESULT:', JSON.stringify(logEntry, null, 2));

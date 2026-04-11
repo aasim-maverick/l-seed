@@ -1,5 +1,5 @@
 """
-Metrics for LongContext-Bench evaluation runs.
+Metrics for L-SEED evaluation runs.
 
 Task-level metrics:
   CFRD, RFS, IRR
